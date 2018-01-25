@@ -31,6 +31,7 @@
                        <td>truckid</td>
                        <td>proof_picture</td>
                        <td>signature_picture</td>
+                       <td>verify image</td>
                     </thead>
                     
                     {% for row in data %}
@@ -43,6 +44,7 @@
                           <td>{{row['truck_id']}}</td>
                           <td>{{row['proof_picture']}}</td>
                           <td>{{row['signature_picture']}}</td>
+                          <td><input type="submit" class="waves-effect waves-light btn" value="verify"></td>
                           
                        </tr>
                     {% endfor %}
