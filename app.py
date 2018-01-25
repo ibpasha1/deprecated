@@ -5,6 +5,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask import jsonify
 import time
 import json
+import os
+import sys
 time.strftime('%Y-%m-%d %H:%M:%S')
 db = pymysql.connect(host='localhost', port=8889, user='root', passwd='root', db='bull_local')
 app = Flask(__name__)
@@ -27,9 +29,9 @@ def get_driver_info():
           pic          = row[10]
           
     except:
-     print ("Error: unable to fetch data")
-    sql = "SELECT * FROM trucks \
-       WHERE owner_id = '%d'" % (8)
+        print ("Error: unable to fetch data")
+        sql = "SELECT * FROM trucks \
+            WHERE owner_id = '%d'" % (8)
     try:
         cursor.execute(sql)
         res1 = cursor.fetchall()
@@ -54,30 +56,41 @@ def voo():
     data = []
     if request.method == 'POST':
        date = request.form['date']
-       cursor = db.cursor()
-       sql = "SELECT * FROM job_details \
-       WHERE date = '%s'" % (date)
-       
+       cursor = db.cursor(pymysql.cursors.DictCursor)
     try:
-        cursor.execute(sql)
+
+        query = """
+        SELECT 
+        job_details.job_id, job_details.job_code, job_details.qty, job_details.is_completed, 
+        owner_route_task_details.owner_id, owner_route_task_details.truck_id,
+        owner_route_tasks.proof_picture, owner_route_tasks.signature_picture, owner_route_tasks.owner_id
+        FROM job_details 
+        INNER JOIN owner_route_task_details
+              ON job_details.job_code = owner_route_task_details.job_code
+        INNER JOIN owner_route_tasks 
+              ON owner_route_tasks.owner_id = owner_route_task_details.owner_id
+        WHERE job_details.date = '%s' 
+        GROUP BY job_details.job_id
+        """ % (date)
+
+        cursor.execute(query)
         results = cursor.fetchall()
+        #import ipdb; ipdb.set_trace()
         for row in results:
-            job_id       = row[1]
-            job_code     = row[2]
-            qty          = row[4]
-            is_completed = row[8]
-            
-        sql = "SELECT * FROM owner_route_task_details \
-        WHERE job_code = '%s'" % (job_code)
-        cursor.execute(sql)
-        results = cursor.fetchall()
-        for row in results:
-            owner_id     = row[3]
-            truckid      = row[9]
-            data.append(row)
+            data.append({
+                'job_id': row['job_id'],
+                'job_code': row['job_code'],
+                'qty': row['qty'],
+                'is_completed': row['is_completed'],
+                'owner_id': row['owner_id'],
+                'truck_id': row['truck_id'],
+                'proof_picture': row['proof_picture'],
+                'signature_picture': row['signature_picture']
+            })
     except:
-        print ("Error: unable to fetch data")
+        print "Error:" , sys.exc_info()[0]
     return render_template('voo.html',data=data)
+    return jsonify('data',data)
 
 
 
