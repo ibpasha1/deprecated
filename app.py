@@ -7,10 +7,32 @@ import time
 import json
 import os
 import sys
+from twilio.rest import Client
+from random import random
+account_sid = "AC14da0799655b1ce7bbddefb5ead5ab89"
+auth_token  = "67edc7ccf6675e798d2c6f88a93e0851"
+client = Client(account_sid, auth_token)
+PEOPLE_FOLDER = os.path.join('static', 'people_photo')
 time.strftime('%Y-%m-%d %H:%M:%S')
 db = pymysql.connect(host='localhost', port=8889, user='root', passwd='root', db='bull_local')
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = PEOPLE_FOLDER
+'''
+client.api.account.messages.create(
+    to="2409387539",
+    from_="+17727424910",
+    body="Hello there!")
+'''
 
+def makeUSNumber(num):
+    result = re.sub('[^0-9]', '', num)
+    if result[0] == '1':
+        result = '+' + result
+    else:
+        result = '+1' + result
+    if len(result) != 12:
+        return 0
+    return result
 
 def get_driver_info():
     date = raw_input("enter date:")
@@ -50,6 +72,9 @@ def get_driver_info():
 @app.route("/", methods=['GET','POST'])
 def index():
     return render_template('index.html')
+
+
+
 
 @app.route("/voo", methods=['GET','POST'])
 def voo():
@@ -91,7 +116,6 @@ def voo():
         print "Error:" , sys.exc_info()[0]
     return render_template('voo.html',data=data)
     return jsonify('data',data)
-
 
 
 
