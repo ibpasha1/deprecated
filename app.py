@@ -12,6 +12,8 @@ from random import random
 from random import *
 from flask_socketio import SocketIO
 from datetime import datetime
+from flask_socketio import send, emit
+
 account_sid = "AC14da0799655b1ce7bbddefb5ead5ab89"
 auth_token  = "67edc7ccf6675e798d2c6f88a93e0851"
 client = Client(account_sid, auth_token)
@@ -29,6 +31,10 @@ client.api.account.messages.create(
     body="Hello there!")
 '''
 
+@socketio.on('client_connected')
+def handle_client_connect_event(json):
+    print('received json: {0}'.format(str(json)))
+
 def makeUSNumber(num):
     result = re.sub('[^0-9]', '', num)
     if result[0] == '1':
@@ -44,6 +50,10 @@ def makeUSNumber(num):
 def index():
     return render_template('index.html')
 
+
+@socketio.on('my event')
+def handle_my_custom_event(json):
+    print('received json: ' + str(json))
 
 
 
@@ -159,7 +169,7 @@ def retake_picture():
         db.commit()
         cursor.close()
         client.api.account.messages.create(
-           to=2409387539,
+           to=2409387539, #change to cell for real numbers - using my number right now so I dont bother people
            from_="+17727424910",
            body="Please retake your picture--sorry testing---Disregard!")
     except:
@@ -171,3 +181,4 @@ def retake_picture():
 if __name__ == "__main__":
     app.secret_key = 'secret123'
     app.run(debug=True)
+    
