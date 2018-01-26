@@ -51,9 +51,26 @@ def index():
     return render_template('index.html')
 
 
-@socketio.on('my event')
+@socketio.on('feed')
 def handle_my_custom_event(json):
-    print('received json: ' + str(json))
+    list = [
+            {'a': 1, 'b': 2},
+            {'a': 5, 'b': 10}
+           ]
+    print('received json: ' + str(json) +str(list))
+
+
+@socketio.on('feed')
+def handle_my_custom_event(json):
+    emit('my response', json)
+
+def hello_to_random_client():
+    import random
+    from datetime import datetime
+    if clients:
+        k = random.randint(0, len(clients)-1)
+        print "Saying hello to %s" % (clients[k].socket.sessid)
+        clients[k].emit('message', "Hello at %s" % (datetime.now()))
 
 
 
