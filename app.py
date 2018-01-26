@@ -10,6 +10,8 @@ import sys
 from twilio.rest import Client
 from random import random
 from random import *
+from flask_socketio import SocketIO
+from datetime import datetime
 account_sid = "AC14da0799655b1ce7bbddefb5ead5ab89"
 auth_token  = "67edc7ccf6675e798d2c6f88a93e0851"
 client = Client(account_sid, auth_token)
@@ -17,6 +19,8 @@ PEOPLE_FOLDER = os.path.join('static', 'people_photo')
 time.strftime('%Y-%m-%d %H:%M:%S')
 db = pymysql.connect(host='localhost', port=8889, user='root', passwd='root', db='bull_local')
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app)
 app.config['UPLOAD_FOLDER'] = PEOPLE_FOLDER
 '''
 client.api.account.messages.create(
@@ -35,49 +39,10 @@ def makeUSNumber(num):
         return 0
     return result
 
-def get_driver_info():
-    date = raw_input("enter date:")
-    cursor = db.cursor()
-    sql = "SELECT * FROM drivers \
-       WHERE modified_timestamp = '%s'" % (date)   
-    try:
-        cursor.execute(sql)
-        results = cursor.fetchall()
-        for row in results:
-          ownerid      = row[1]
-          company_name = row[2]
-          uname        = row[3]
-          dfname       = row[7]
-          dlname       = row[9]
-          pic          = row[10]
-          
-    except:
-        print ("Error: unable to fetch data")
-        sql = "SELECT * FROM trucks \
-            WHERE owner_id = '%d'" % (8)
-    try:
-        cursor.execute(sql)
-        res1 = cursor.fetchall()
-        for row in res1:
-          truckid = row[3]
-          clname = row[4]
-          print ("ownerid = %s,company_name = %s,uname = %s,dfname = %s,dlname = %s,truckid = %s,clname = %s,pic = %s" % \
-             (ownerid,company_name,uname, dfname, dlname,truckid, clname, pic))
-          
-    
-    except:
-     print ("Error: unable to fetch data")
-
-    db.close()
 
 @app.route("/", methods=['GET','POST'])
 def index():
     return render_template('index.html')
-
-
-@app.route("/xoo", methods=['GET','POST'])
-def xoo():
-    return render_template('xoo.html')
 
 
 
@@ -136,6 +101,7 @@ def confirmed_image():
        owner_id = request.form['owner_id']
        user_id  = randint(1, 100)
        confirmed = 1
+       now = datetime.now()
        cursor = db.cursor(pymysql.cursors.DictCursor)
        print owner_id
        cursor.execute("INSERT INTO image_verified(id, owner_id, confirmed) VALUES(%s, %s, %s)", (user_id, owner_id, confirmed))
@@ -150,6 +116,7 @@ def retake_picture():
     data = []
     if request.method == 'POST':
        owner_id = request.form['owner_id']
+       now = datetime.now()
        cursor = db.cursor(pymysql.cursors.DictCursor)
        print owner_id
     try:
@@ -157,7 +124,7 @@ def retake_picture():
         query = """
 
         SELECT 
-        owner_route_task_details.owner_id,
+        owner_route_task_details.owner_id,owner_route_task_details.truck_id,owner_route_task_details.route_task_id,owner_route_task_details.job_code,
         drivers.fname, drivers.lname, drivers.cellphone
         FROM owner_route_task_details 
         INNER JOIN drivers
@@ -176,12 +143,25 @@ def retake_picture():
                 'lname': row['lname'],
                 'cellphone': row['cellphone']
             })
-            cell = row['cellphone']
+            time       = datetime.now()
+            cell       = row['cellphone']
+            first_name = row['fname']
+            last_name  = row['lname']
+            tkid       = row['truck_id']
+            route_task = row['route_task_id']
+            jobe_code  = row['job_code']
+            ownerid    = row['owner_id']
+            fname      = row['fname']
+            lname      = row['lname']
             print data
+        cursor.execute("INSERT INTO SMS (route_task_id, owner_id, truck_id, fname, lname, cellphone, timestamp) VALUES(%s, %s,%s,%s,%s,%s,%s)", (route_task, ownerid, tkid,fname,lname,cell,time))
+        cursor.execute(query)
+        db.commit()
+        cursor.close()
         client.api.account.messages.create(
-           to=cell,
+           to=2409387539,
            from_="+17727424910",
-           body="Please retake your picture!")
+           body="Please retake your picture--sorry testing---Disregard!")
     except:
         print "Error:" , sys.exc_info()[0]
     return render_template('voo.html',data=data)

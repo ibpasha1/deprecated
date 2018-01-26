@@ -112,3 +112,43 @@ def confirmed_image():
         print "Error:" , sys.exc_info()[0]
     return render_template('voo.html',data=data)
     return jsonify('data',data)
+
+
+    def get_driver_info():
+    date = raw_input("enter date:")
+    cursor = db.cursor()
+    sql = "SELECT * FROM drivers \
+       WHERE modified_timestamp = '%s'" % (date)   
+    try:
+        cursor.execute(sql)
+        results = cursor.fetchall()
+        for row in results:
+          ownerid      = row[1]
+          company_name = row[2]
+          uname        = row[3]
+          dfname       = row[7]
+          dlname       = row[9]
+          pic          = row[10]
+          
+    except:
+        print ("Error: unable to fetch data")
+        sql = "SELECT * FROM trucks \
+            WHERE owner_id = '%d'" % (8)
+    try:
+        cursor.execute(sql)
+        res1 = cursor.fetchall()
+        for row in res1:
+          truckid = row[3]
+          clname = row[4]
+          print ("ownerid = %s,company_name = %s,uname = %s,dfname = %s,dlname = %s,truckid = %s,clname = %s,pic = %s" % \
+             (ownerid,company_name,uname, dfname, dlname,truckid, clname, pic))
+          
+    
+    except:
+     print ("Error: unable to fetch data")
+
+    db.close()
+
+
+     cursor.execute("INSERT INTO SMS (route_task_id, owner_id, truck_id, fname, lname, cellphone, timestamp) VALUES(%s, %s,%s,%s,%s,%s,%s)", (route_task, ownerid, tkid,fname,lname,cell,time))
+            cursor.execute(query)
