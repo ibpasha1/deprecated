@@ -19,6 +19,7 @@
             </form>
          </div>
       </center>
+      <ul id="message"></ul>
       <a class="btn" id="note">test push</a>
       <table border = 1 class="striped">
          <thead>
@@ -66,38 +67,29 @@
       <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
       <script text="text/javascript">
-         $( document ).ready(function() {
-            
+         $( document ).ready(function() {   
            $('.datepicker').pickadate({
                    selectMonths: true, // Creates a dropdown to control month
                    selectYears: 15, // Creates a dropdown of 15 years to control year,
                    format: 'yyyy-mm-dd',
                    closeOnSelect: false // Close upon selecting a date,
                });
-
-               document.getElementById("note").onclick = function () {
+            document.getElementById("note").onclick = function () {
                     Materialize.toast('New photo updated!', 4000) // 4000 is the duration of the toast
-                };
-
+               };
                
-
-
-                var socket = io.connect('http://' + document.domain + ':' + location.port);
-                socket.on('connect', function() {
-                    socket.emit('my event', {data: 'I\'m connected!'});
-                    Materialize.toast('connected to aggdirect server', 4000) // 4000 is the duration of the toast
-                });
-
-
-                var socket = io.connect('http://' + document.domain + ':' + location.port);
-                     socket.on('connect', function() {
-                     socket.emit('connected');
-                 });
-                     socket.on('message', function(data) {
-                     $('h1').text(data)
+                 var socket = io.connect('http://' + document.domain + ':' + location.port);
+                 socket.on('connect',function() {
+                    socket.send('testing');
+                 
                  });
 
-
+                 socket.on('message', function(msg) {
+                    $("#messages").append('<li>'+msg+'</li>');
+                    Materialize.toast(msg, 1000)
+                    Materialize.toast('connected to aggdirect server', 4000)
+                    console.log('re');
+                 });
                
          });
          

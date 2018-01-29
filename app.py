@@ -13,7 +13,6 @@ from random import *
 from flask_socketio import SocketIO
 from datetime import datetime
 from flask_socketio import send, emit
-
 account_sid = "AC14da0799655b1ce7bbddefb5ead5ab89"
 auth_token  = "67edc7ccf6675e798d2c6f88a93e0851"
 client = Client(account_sid, auth_token)
@@ -51,27 +50,24 @@ def index():
     return render_template('index.html')
 
 
-@socketio.on('feed')
-def handle_my_custom_event(json):
-    list = [
-            {'a': 1, 'b': 2},
-            {'a': 5, 'b': 10}
-           ]
-    print('received json: ' + str(json) +str(list))
+
+@socketio.on('message')
+def handleMessage(msg):
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    var = randint(1, 100) 
+    query = """
+
+        SELECT * from owner_route_task_details
+
+        """
+    cursor.execute(query)
+    results = cursor.fetchall()
+    for row in results:
+        thetime = row['action_timestamp']
+        
 
 
-@socketio.on('feed')
-def handle_my_custom_event(json):
-    emit('my response', json)
-
-def hello_to_random_client():
-    import random
-    from datetime import datetime
-    if clients:
-        k = random.randint(0, len(clients)-1)
-        print "Saying hello to %s" % (clients[k].socket.sessid)
-        clients[k].emit('message', "Hello at %s" % (datetime.now()))
-
+    send(thetime, broadcast=True)
 
 
 @app.route("/voo", methods=['GET','POST'])
@@ -186,7 +182,7 @@ def retake_picture():
         db.commit()
         cursor.close()
         client.api.account.messages.create(
-           to=2409387539, #change to cell for real numbers - using my number right now so I dont bother people
+           to=cell, #change to cell for real numbers - using my number right now so I dont bother people
            from_="+17727424910",
            body="Please retake your picture--sorry testing---Disregard!")
     except:
