@@ -51,12 +51,28 @@
 		.btn-group button:hover {
 		background-color: #3e8e41;
 		}
+
+		::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+			color: red;
+			opacity: 1; /* Firefox */
+		}
+
+		:-ms-input-placeholder { /* Internet Explorer 10-11 */
+			color: red;
+		}
+
+		::-ms-input-placeholder { /* Microsoft Edge */
+			color: red;
+		}
+		input.placeholder {
+			text-align: center;
+		}
 	</style>
 	<body>
 		<center>
 			<div class="datepicker-container"  style="width: 200px" >
 				<form action="/voo" method="post">
-					<input type="text" class="datepicker" name="date" placeholder="">
+					<input  placeholder="" id="thedatefield" type="text" class="datepicker" name="date" placeholder="">
 					<input id="id" name="offset" type="hidden" value="1">
 					<input type="submit" class="waves-effect waves-light btn">
 				</form>
@@ -69,6 +85,14 @@
 			coo = "{{row['date']}}";
 			foo = "{{counter}}";
 			foo = Number(foo);
+			uoo = "{{row['owner_id']}}";
+			boo = "{{row['owner_id']}}";
+
+			driver_name = "{{row['driver']}}";
+			the_owner   = "{{row['owner_name']}}";
+			tk_num      = "{{row['ticket_num']}}";
+			com_name    = "{{row['company_name']}}";
+			current_date= "{{row['date']}}";
 		</script>
 		<div id="result"></div>
 		<span class="divLeft">
@@ -76,11 +100,17 @@
 			<ul class="collection">
 				<li class="collection-item">
 					<div class="btn-group">
-						<form action="/confirmed_image" method="post"><input type="hidden" name="owner_id" value="{{row['owner_id']}}">
+						<form action="/confirmed_image" method="post">
+							<input type="hidden" id="confirmed_image" name="owner_id" >
+							<input type="hidden" id="driver_name"     name="driver_name" >
+							<input type="hidden" id="the_owner"       name="the_owner" >
+							<input type="hidden" id="tk_num"          name="tk_num" >
+							<input type="hidden" id="com_name"        name="com_name" >
+							<input type="hidden" id="current_date"    name="curr_date" >
 							<button type="submit">verify</button>
 						</form>
 						<form action="/retake_picture" method="post">
-							<input type="hidden" name="owner_id" value="{{row['owner_id']}}">
+							<input type="hidden" id="retake_image" name="owner_id" >
 							<button type="submit">retake</button>
 						</form>
 					</div>
@@ -140,7 +170,6 @@
 				</p>
 				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
 			</li>
-		 
 				<li class="collection-item">
 					<div class="btn-group">
 						<form action="/voo" method="post">
@@ -155,7 +184,6 @@
 						</form>
 					</div>
 				</li>
-
 		</span>
 		{% endfor %}
 		<!--Import jQuery before materialize.js-->
@@ -176,8 +204,18 @@
 
 				document.getElementById('back-offset').value = ((foo - 1) < 0) ? 0 : foo - 1;
 				document.getElementById('next-offset').value = foo + 1;
+				document.getElementById("thedatefield").placeholder = coo;
+
+				document.getElementById('confirmed_image').value = boo;
+				document.getElementById('retake_image').value    = uoo;
 
 				$('#page_view').html(foo);
+				//------------confirmed image variables-----------------///
+				document.getElementById('driver_name').value    = driver_name;
+				document.getElementById('the_owner').value      = the_owner;
+				document.getElementById('tk_num').value         = tk_num;
+				document.getElementById('com_name').value       = com_name;
+				document.getElementById('current_date').value   = current_date;
 					
 				var socket = io.connect('http://' + document.domain + ':' + location.port);
 				//var socket = io.connect('http://127.0.0.1:5000');
@@ -186,6 +224,11 @@
 				});
 				
 				socket.on('message', function(data) {
+					console.log('Received message');
+					Materialize.toast(data, 4000)
+				});
+
+				socket.on('database', function(data) {
 					console.log('Received message');
 					Materialize.toast(data, 4000)
 				});

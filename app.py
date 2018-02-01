@@ -47,11 +47,11 @@ def handleMessage(msg):
 
 def background_thread():                                                        
     while True:                                                                 
-        socketio.emit('message', 'Finally got a message from dam python')                   
+        socketio.emit('message', 'Welcome - Socket Begin...')                   
         time.sleep(5)
-        socketio.emit('message', 'testing connection from backend') 
+        socketio.emit('message', 'testing connection to backend') 
         time.sleep(5)
-        socketio.emit('message', 'connection pending') 
+        socketio.emit('message', 'connection pending......') 
         time.sleep(5)
         socketio.emit('message', 'connection established') 
         time.sleep(5)
@@ -93,33 +93,34 @@ def index():
 
 
 
-'''
-@socketio.on('feed')
-def handleMessage(msg):
-    data = []
-    cursor = db.cursor(pymysql.cursors.DictCursor)
-    now = datetime.now()
-    query = """
+
+
+def feed():
+    while True:
+        data = []
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        now = datetime.now()
+        query = """
 
         SELECT * from owner_route_task_details where action_timestamp = '%s' 
 
         """ % (now)
 
-    cursor.execute(query)
-    results = cursor.fetchall()
-    for row in results:
-        data.append({
+        cursor.execute(query)
+        results = cursor.fetchall()
+        for row in results:
+            data.append({
                 'task_id': row['route_task_id'],
                 'owner': row['owner_id'],
                 'job': row['job_code'],
                 'truck': row['truck_id'],
             })
         
-    send(data, broadcast=True)
-'''
+        socketio.emit('database', data)  
+
 
 @app.route("/voo", methods=['GET','POST'])
-def voo():
+def voo(): 
     data = []
     counter = 0
     if request.method == 'POST':
@@ -179,17 +180,21 @@ def voo():
 @app.route("/confirmed_image", methods=['GET','POST'])
 def confirmed_image():
     if request.method == 'POST':
-       owner_id = request.form['owner_id']
-       user_id  = randint(1, 100)
-       confirmed = 1
+       owner_id     = request.form['owner_id']
+       confirmed    = 'Confirmed'
+       driver_name  = request.form['driver_name']
+       the_owner    = request.form['the_owner']
+       tk_num       = request.form['tk_num']
+       com_name     = request.form['com_name']
+       curr_date    = request.form['curr_date']
+       #user_id  = randint(1, 100)
        now = datetime.now()
        cursor = db.cursor(pymysql.cursors.DictCursor)
        print owner_id
-       cursor.execute("INSERT INTO image_verified(id, owner_id, confirmed) VALUES(%s, %s, %s)", (user_id, owner_id, confirmed))
-
+       cursor.execute("INSERT INTO image_verified(owner_id,confirmed,driver_name,the_owner,tk_num,com_name,curr_date,timestamp) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)", (owner_id, confirmed,driver_name,the_owner,tk_num,com_name,curr_date,now))
        db.commit()
        cursor.close()
-       return render_template('voo.html')
+       return render_template('confirmed_image.html')
      
 
 @app.route("/retake_picture", methods=['GET','POST'])
@@ -247,7 +252,7 @@ def retake_picture():
            body="Please retake your picture--sorry testing---Disregard!")
     except:
         print "Error:" , sys.exc_info()[0]
-    return render_template('voo.html',data=data)
+    return render_template('retake_confirmed.html')
     return jsonify('data',data)
 
 
