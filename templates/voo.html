@@ -1,109 +1,197 @@
 <!DOCTYPE html>
 <html>
-   <head>
-      <!--Import Google Icon Font-->
-      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-      <!--Import materialize.css-->
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
-      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
-      <script type="text/javascript" src="{{ url_for('static', filename='js/app.js') }}"></script>
-      <!--Let browser know website is optimized for mobile-->
-      <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-   </head>
-   <body>
-      <center>
-         <div class="datepicker-container"  style="width: 200px" >
-            <form action="/voo" method="post">
-               <input type="text" class="datepicker" name="date">
-               <input type="submit" class="waves-effect waves-light btn">
-            </form>
-         </div>
-      </center>
-      <ul id="message"></ul>
-      <a class="btn" id="note">test push</a>
-      <table border = 1 class="striped">
-         <thead>
-            <td>job id</td>
-            <td>job code</td>
-            <td>qty</td>
-            <td>is completed?</td>
-            <td>owner id</td>
-            <td>truckid</td>
-            <td>driverid</td>
-            <td>proof picture</td>
-            <td>signature picture</td>
-            <td>verify image</td>
-            <td>retake request</td>
-         </thead>
-         {% for row in data %}
-         <tr>
-            <td>{{row['job_id']}}</td>
-            <td>{{row['job_code']}}</td>
-            <td>{{row['qty']}}</td>
-            <td>{{row['is_completed']}}</td>
-            <td>{{row['owner_id']}}</td>
-            <td>{{row['truck_id']}}</td>
-            <td>{{row['driver_id']}}</td>
-            <td>
-               <img onmouseover="bigImg(this)" onmouseout="normalImg(this)" border="0" src="http://aggdirect.com/task_proof_images/{{row['proof_picture']}}" alt="proof picture" width="100" height="100">
-            </td>
-            <td><img id="myImg" src="{{row['signature_picture']}}" alt="signature picture"></td>
-            <td>
-                  <form action="/confirmed_image" method="post">
-                  <input type="hidden" name="owner_id" value="{{row['owner_id']}}">
-                  <input type="submit" class="waves-effect waves-light btn" value="verify">
-                  </form>
-            </td>
-            <td>
-                  <form action="/retake_picture" method="post">
-                  <input type="hidden" name="owner_id" value="{{row['owner_id']}}">
-                  <input type="submit" class="waves-effect waves-light btn" value="retake">
-                  </form>
-            </td>
-         </tr>
-         {% endfor %}
-      </table>
-      <!--Import jQuery before materialize.js-->
-      <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
-      <script text="text/javascript">
-         $( document ).ready(function() {   
-           $('.datepicker').pickadate({
-                   selectMonths: true, // Creates a dropdown to control month
-                   selectYears: 15, // Creates a dropdown of 15 years to control year,
-                   format: 'yyyy-mm-dd',
-                   closeOnSelect: false // Close upon selecting a date,
-               });
-            document.getElementById("note").onclick = function () {
-                    Materialize.toast('New photo updated!', 4000) // 4000 is the duration of the toast
-               };
-               
-                 var socket = io.connect('http://' + document.domain + ':' + location.port);
-                 socket.on('connect',function() {
-                    socket.send('testing');
-                 
-                 });
+	<head>
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+		<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	</head>
+	<style type="text/css">
+		.divLeft {
+		width:500px;
+		display:block;
+		float: left;
+		}
+		.divRight {
+		width:500px;
+		display:block;
+		float: right;
+		}
+		.btn{
+		background-color: gray
+		}
+		.btn:visited{
+		background-color: gray
+		}
+		.btn:hover {
+		background-color: gray
+		}
+		.btn:active{
+		background-color: gray;
+		}
+		.btn-group button {
+		background-color: #000; /* Green background */
+		border: 1px solid #000; /* Green border */
+		color: white; /* White text */
+		padding: 10px 24px; /* Some padding */
+		cursor: pointer; /* Pointer/hand icon */
+		float: left; /* Float the buttons side by side */
+		}
+		/* Clear floats (clearfix hack) */
+		.btn-group:after {
+		content: "";
+		clear: both;
+		display: table;
+		}
+		.btn-group button:not(:last-child) {
+		border-right: none; /* Prevent double borders */
+		}
+		/* Add a background color on hover */
+		.btn-group button:hover {
+		background-color: #3e8e41;
+		}
+	</style>
+	<body>
+		<center>
+			<div class="datepicker-container"  style="width: 200px" >
+				<form action="/voo" method="post">
+					<input type="text" class="datepicker" name="date" placeholder="">
+					<input id="id" name="offset" type="hidden" value="1">
+					<input type="submit" class="waves-effect waves-light btn">
+				</form>
+			</div>
+			<p>page: <a id="page_view"></a></p>
+		</center>
+		</br>
+		{% for row in data %}
+		<script type="text/javascript">
+			coo = "{{row['date']}}";
+			foo = "{{counter}}";
+			foo = Number(foo);
+		</script>
+		<div id="result"></div>
+		<span class="divLeft">
+			<img class="materialboxed" width="500" height="500" src="http://aggdirect.com/task_proof_images/{{row['proof_picture']}}">
+			<ul class="collection">
+				<li class="collection-item">
+					<div class="btn-group">
+						<form action="/confirmed_image" method="post"><input type="hidden" name="owner_id" value="{{row['owner_id']}}">
+							<button type="submit">verify</button>
+						</form>
+						<form action="/retake_picture" method="post">
+							<input type="hidden" name="owner_id" value="{{row['owner_id']}}">
+							<button type="submit">retake</button>
+						</form>
+					</div>
+				</li>
+			</ul>
+		</span>
+		<span class="divRight">
+			<ul class="collection">
+			<li class="collection-item avatar">
+				<i class="material-icons circle">airline_seat_recline_normal</i>
+				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
+				<span class="title">Driver:</span>
+				<p>
+					{{row['driver']}} <br>
+					{{row['cell_phone']}}
+				</p>
+				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
+			</li>
+			<li class="collection-item avatar">
+				<i class="material-icons circle">accessibility</i>
+				<span class="title">Owner:</span>
+				<p>
+					{{row['owner_name']}} <br>
+					{{row['owner_num']}}
+				</p>
+				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
+			</li>
+			<li class="collection-item avatar">
+				<i class="material-icons circle ">clear_all</i>
+				<span class="title">Qty:</span>
+				<p>
+					{{row['qty']}}
+				</p>
+				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
+			</li>
+			<li class="collection-item avatar">
+				<i class="material-icons circle ">receipt</i>
+				<span class="title">Ticket Number</span>
+				<p>
+					{{row['ticket_num']}}
+				</p>
+				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
+			</li>
+			<li class="collection-item avatar">
+				<i class="material-icons circle ">airport_shuttle</i>
+				<span class="title">Customer Name:</span>
+				<p>
+					{{row['customer_name']}}
+				</p>
+				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
+			</li>
+			<li class="collection-item avatar">
+				<i class="material-icons circle ">business</i>
+				<span class="title">Company Name:</span>
+				<p>
+					{{row['company_name']}}
+				</p>
+				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
+			</li>
+		 
+				<li class="collection-item">
+					<div class="btn-group">
+						<form action="/voo" method="post">
+							<input type="hidden" id="back-text"   name="date">
+							<input type="hidden" id="back-offset" name="offset">
+							<button type="submit">back</button>
+						</form>
+						<form action="/voo" method="post">
+							<input type="hidden" id="next-text"   name="date">
+							<input type="hidden" id="next-offset" name="offset">
+							<button type="submit">next</button>
+						</form>
+					</div>
+				</li>
 
-                 socket.on('message', function(msg) {
-                    $("#messages").append('<li>'+msg+'</li>');
-                    Materialize.toast(msg, 1000)
-                    Materialize.toast('connected to aggdirect server', 4000)
-                    console.log('re');
-                 });
-               
-         });
-         
-      </script>
-      <script>
-      function bigImg(x) {
-                    x.style.height = "800px";
-                    x.style.width  = "800px";
-                }
+		</span>
+		{% endfor %}
+		<!--Import jQuery before materialize.js-->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+		<script text="text/javascript">
+			$( document ).ready(function() {
+				$('.datepicker').pickadate({
+					selectMonths: true, // Creates a dropdown to control month
+					selectYears: 15, // Creates a dropdown of 15 years to control year,
+					format: 'yyyy-mm-dd',
+					closeOnSelect: false // Close upon selecting a date,
+				});
+			
+				document.getElementById('back-text').value = coo;
+				document.getElementById('back-text').placeholder = coo;
+				document.getElementById('next-text').value = coo;
+				document.getElementById('next-text').placeholder = coo;
 
-               function normalImg(x) {
-                    x.style.height = "100px";
-                    x.style.width  = "100px";
-                }
-      </script>
-   </body>
+				document.getElementById('back-offset').value = ((foo - 1) < 0) ? 0 : foo - 1;
+				document.getElementById('next-offset').value = foo + 1;
+
+				$('#page_view').html(foo);
+					
+				var socket = io.connect('http://' + document.domain + ':' + location.port);
+				//var socket = io.connect('http://127.0.0.1:5000');
+				socket.on('connect', function() {
+					socket.send('User has connected! - Welcome to AggDirect');
+				});
+				
+				socket.on('message', function(data) {
+					console.log('Received message');
+					Materialize.toast(data, 4000)
+				});
+			
+			});
+			
+		</script>
+	</body>
 </html>

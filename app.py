@@ -13,15 +13,24 @@ from random import *
 from flask_socketio import SocketIO
 from datetime import datetime
 from flask_socketio import send, emit
+from flask_paginate import Pagination, get_page_args
+import click
+from flask import Blueprint
+from decimal import Decimal
+from threading import Lock
 account_sid = "AC14da0799655b1ce7bbddefb5ead5ab89"
 auth_token  = "67edc7ccf6675e798d2c6f88a93e0851"
 client = Client(account_sid, auth_token)
 PEOPLE_FOLDER = os.path.join('static', 'people_photo')
 time.strftime('%Y-%m-%d %H:%M:%S')
-db = pymysql.connect(host='localhost', port=8889, user='root', passwd='root', db='bull_local')
+db = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local')
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
+async_mode = None
+thread = None
+thread_lock = Lock()
+#socketio = SocketIO(app, async_mode=async_mode)
 app.config['UPLOAD_FOLDER'] = PEOPLE_FOLDER
 '''
 client.api.account.messages.create(
@@ -29,11 +38,43 @@ client.api.account.messages.create(
     from_="+17727424910",
     body="Hello there!")
 '''
+'''
+@socketio.on('message')
+def handleMessage(msg):
+    for i in range(0,10):
+	    emit('message', {'hello': "Hello"})
+'''
 
-@socketio.on('client_connected')
-def handle_client_connect_event(json):
-    print('received json: {0}'.format(str(json)))
+def background_thread():                                                        
+    while True:                                                                 
+        socketio.emit('message', 'Finally got a message from dam python')                   
+        time.sleep(5)
+        socketio.emit('message', 'testing connection from backend') 
+        time.sleep(5)
+        socketio.emit('message', 'connection pending') 
+        time.sleep(5)
+        socketio.emit('message', 'connection established') 
+        time.sleep(5)
+        socketio.emit('message', 'looping content in.....') 
+        time.sleep(1)
+        socketio.emit('message', '5..') 
+        time.sleep(1)
+        socketio.emit('message', '4..') 
+        time.sleep(1)
+        socketio.emit('message', '3..')
+        time.sleep(1)
+        socketio.emit('message', '2..')
+        time.sleep(1)
+        socketio.emit('message', '1..') 
+        print 'wtf'
 
+@socketio.on('connect')                                                         
+def connect():                                                                  
+    global thread                                                               
+    if thread is None:                                                          
+        thread = socketio.start_background_task(target=background_thread)  
+
+        
 def makeUSNumber(num):
     result = re.sub('[^0-9]', '', num)
     if result[0] == '1':
@@ -48,72 +89,89 @@ def makeUSNumber(num):
 @app.route("/", methods=['GET','POST'])
 def index():
     return render_template('index.html')
+    
 
 
 
-@socketio.on('message')
+'''
+@socketio.on('feed')
 def handleMessage(msg):
+    data = []
     cursor = db.cursor(pymysql.cursors.DictCursor)
-    var = randint(1, 100) 
+    now = datetime.now()
     query = """
 
-        SELECT * from owner_route_task_details
+        SELECT * from owner_route_task_details where action_timestamp = '%s' 
 
-        """
+        """ % (now)
+
     cursor.execute(query)
     results = cursor.fetchall()
     for row in results:
-        thetime = row['action_timestamp']
+        data.append({
+                'task_id': row['route_task_id'],
+                'owner': row['owner_id'],
+                'job': row['job_code'],
+                'truck': row['truck_id'],
+            })
         
-
-
-    send(thetime, broadcast=True)
-
+    send(data, broadcast=True)
+'''
 
 @app.route("/voo", methods=['GET','POST'])
 def voo():
     data = []
+    counter = 0
     if request.method == 'POST':
-       date = request.form['date']
+       date   = request.form['date']
+       offset  = request.form['offset']
+       #counter = request.form['offset']
        cursor = db.cursor(pymysql.cursors.DictCursor)
+       counter = offset
     try:
-
+        
         query = """
        
 
-        SELECT 
-        job_details.job_id, job_details.job_code, job_details.qty, job_details.is_completed, 
-        owner_route_task_details.owner_id, owner_route_task_details.truck_id, 
-        owner_route_tasks.proof_picture, owner_route_tasks.signature_picture, owner_route_tasks.owner_id
-        FROM job_details 
-        INNER JOIN owner_route_task_details
-              ON job_details.job_code = owner_route_task_details.job_code
-        INNER JOIN owner_route_tasks 
-              ON owner_route_tasks.owner_id = owner_route_task_details.owner_id
-        WHERE job_details.date = '%s' 
-        GROUP BY job_details.job_id
-        
-        
-        """ % (date)
+        SELECT DISTINCT(o.proof_picture), o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
+        from drivers d where d.id = o.assigned_driver) as Driver,
+        (select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
+        (select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #", 
+        (select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name", 
+        (select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
+        (select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
+        as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
+        left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c on 
+        c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '%s' ORDER by o.ending_time desc LIMIT 1 offset %s
+         
+    
+        """ % (date, offset)
 
         cursor.execute(query)
         results = cursor.fetchall()
         #import ipdb; ipdb.set_trace()
         for row in results:
             data.append({
-                'job_id': row['job_id'],
-                'job_code': row['job_code'],
-                'truck_id': row['truck_id'],
-                'qty': row['qty'],
-                'is_completed': row['is_completed'],
-                'owner_id': row['owner_id'],
                 'proof_picture': row['proof_picture'],
-                'signature_picture': row['signature_picture']
+                'qty': row['qty'],
+                'driver': row['Driver'],
+                'owner_name': row['Owner'],
+                'owner_num': row['Owner Phone#'],
+                'ticket_num': row['ticket_number'],
+                'customer_name': row['Customer Name'],
+                'company_name': row['Company Name'],
+                'company_truck': row['Company Truck #'],
+                'cell_phone': row['driver_phone'],
+                'owner_id': row['owner_id'],
+                'date': date
             })
-            print data
+            print data 
+        counter += 1
+           
+        
     except:
         print "Error:" , sys.exc_info()[0]
-    return render_template('voo.html',data=data)
+    return render_template('voo.html',data=data, counter=counter)
     return jsonify('data',data)
 
 
@@ -181,6 +239,8 @@ def retake_picture():
         cursor.execute(query)
         db.commit()
         cursor.close()
+        #hell = 2409387539
+        #cell = makeUSNumber(cell)
         client.api.account.messages.create(
            to=cell, #change to cell for real numbers - using my number right now so I dont bother people
            from_="+17727424910",
@@ -192,6 +252,7 @@ def retake_picture():
 
 
 if __name__ == "__main__":
-    app.secret_key = 'secret123'
-    app.run(debug=True)
+    #app.secret_key = 'secret123'
+    #app.run(debug=True)
+    socketio.run(app)
     
