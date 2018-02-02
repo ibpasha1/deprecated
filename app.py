@@ -131,8 +131,6 @@ def index():
 def voo(): 
     data = []
     counter = 1
-    pa = ''
-    da = ''
     if request.method == 'POST':
        date   = request.form['date']
        offset  = request.form['offset']
