@@ -24,7 +24,7 @@ client = Client(account_sid, auth_token)
 PEOPLE_FOLDER = os.path.join('static', 'people_photo')
 time.strftime('%Y-%m-%d %H:%M:%S')
 db = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local')
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 async_mode = None
@@ -171,7 +171,9 @@ def voo():
         (select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #", 
         (select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name", 
         (select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
-         (select jobs.unit_pay from jobs where id = o.owner_id) as "type",
+        (select jobs.unit_pay from jobs where id = o.owner_id) as "type1",
+        (select jobs.pick_address from jobs where id = o.owner_id) as "type2",
+        (select jobs.delivery_address from jobs where id = o.owner_id) as "type3",
         (select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
         as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
         left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c  on 
@@ -196,29 +198,19 @@ def voo():
                 'job_code': row['job_code'],
                 'date': date,
                 'thecount':thecount,
-                'unit_pay':row['type']
+                'unit_pay':row['type1'],
+                'pick_address':row['type2'],
+                'delivery_address':row['type3']
+                
                 
             })
-            cn = row['Customer Name']
-            print data
-
-        query = """
-        SELECT pick_address, delivery_address from jobs where customer_comp_name = '%s' 
-                """% (cn)
-        cursor.execute(query)
-        results = cursor.fetchall()
-        for row in results:
-            pa = row['pick_address']
-            da = row['delivery_address']
-            
-            #print pa
-            #print da
+           
         counter += 1
              
     except:
         
         print "Error:" , sys.exc_info()[0]
-    return render_template('voo.html',data=data, counter=counter, pa=pa, da=da)
+    return render_template('voo.html',data=data, counter=counter)
     return jsonify('data',data)
 
 
@@ -248,6 +240,7 @@ def retake_picture():
     data = []
     if request.method == 'POST':
        owner_id = request.form['owner_id']
+       tk_num       = request.form['tk_num']
        now = datetime.now()
        cursor = db.cursor(pymysql.cursors.DictCursor)
        print owner_id
@@ -286,7 +279,7 @@ def retake_picture():
             fname      = row['fname']
             lname      = row['lname']
             print data
-        cursor.execute("INSERT INTO SMS (route_task_id, owner_id, truck_id, fname, lname, cellphone, timestamp) VALUES(%s, %s,%s,%s,%s,%s,%s)", (route_task, ownerid, tkid,fname,lname,cell,time))
+        cursor.execute("INSERT INTO SMS (route_task_id, owner_id, truck_id, tk_num, fname, lname, cellphone, timestamp) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)", (route_task, ownerid, tkid,tk_num,fname,lname,cell,time))
         cursor.execute(query)
         db.commit()
         cursor.close()

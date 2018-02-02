@@ -114,6 +114,7 @@
 						</form>
 						<form action="/retake_picture" method="post">
 							<input type="hidden" id="retake_image" name="owner_id" >
+							<input type="hidden" id="tk_num"       name="tk_num" >
 							<button type="submit">retake</button>
 						</form>
 					</div>
@@ -144,10 +145,10 @@
 			</li>
 			<li class="collection-item avatar">
 				<i class="material-icons circle ">receipt</i>
-				<span class="title">General Info:</span>
-				Ticket Number:<p>{{row['ticket_num']}}</p>
-				Customer Name:<p>{{row['customer_name']}}</p>
-					   Quanty:<p>{{row['qty']}}:{{row['unit_pay']}}</p> 
+				<span class="title">General Info:</span><br>
+				<p>Ticket Number:{{row['ticket_num']}}</p>
+				<p>Customer Name:{{row['customer_name']}}</p>
+				<p>Quanty:{{row['qty']}}:type:{{row['unit_pay']}}</p> 
 				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
 			</li>
 			<li class="collection-item avatar">
@@ -162,8 +163,8 @@
 			<li class="collection-item avatar">
 				<i class="material-icons circle ">business</i>
 				<span class="title">Delivery/Pickup:</span>
-				<p>Pickup:   {{pa}}</p> <br>
-				<p>Delivery: {{da}}</p>	
+				<p>Pickup:   {{row['pick_address']}}</p>
+				<p>Delivery: {{row['delivery_address']}}</p>	
 				
 				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
 			</li>
