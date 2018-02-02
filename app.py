@@ -44,7 +44,7 @@ def handleMessage(msg):
     for i in range(0,10):
 	    emit('message', {'hello': "Hello"})
 '''
-
+'''
 def background_thread():                                                        
     while True:                                                                 
         socketio.emit('message', 'Welcome - Socket Begin...')                   
@@ -67,18 +67,36 @@ def background_thread():
         time.sleep(1)
         socketio.emit('message', '1..') 
         print 'wtf'
-
+'''
 
 def feed():
     cursor = db.cursor(pymysql.cursors.DictCursor)
     query = """
-             SELECT * from owner_route_task_details order by action_timestamp desc LIMIT 1
-            """ 
+            SELECT action_timestamp from owner_route_task_details order by action_timestamp desc LIMIT 1
+            """
+    
     cursor.execute(query)
     results = cursor.fetchall()
-    if results != 0:
-       socketio.emit('database', 'New Ticket')
-    time.sleep(1)  
+        
+    for row in results:
+        t1 = row['action_timestamp']
+        print t1
+    
+    time.sleep(5)
+    
+    query = """
+            SELECT action_timestamp from owner_route_task_details order by action_timestamp desc LIMIT 1
+            """
+
+    for row in results:
+        t2 = row['action_timestamp']
+        print t2
+    
+    if t2 > t1:
+        socketio.emit('database', 'New Ticket') 
+    cursor.close()
+
+
 
 @socketio.on('connect')                                                         
 def runFeed():                                                                  
@@ -109,14 +127,12 @@ def makeUSNumber(num):
 def index():
     return render_template('index.html')
     
-
-          
-
-
 @app.route("/voo", methods=['GET','POST'])
 def voo(): 
     data = []
     counter = 1
+    pa = ''
+    da = ''
     if request.method == 'POST':
        date   = request.form['date']
        offset  = request.form['offset']
@@ -140,34 +156,26 @@ def voo():
         )x
 
         """ %(date)
-
-        
        cursor.execute(query)
        results = cursor.fetchall()
 
        for row in results:
            thecount = row['count(owner_id)']
-           print thecount
+           #print thecount
             
     try:
-
-        
-        
         query = """
-       
-
-        SELECT DISTINCT(o.proof_picture), o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
+        SELECT DISTINCT(o.proof_picture), o.job_code, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
         from drivers d where d.id = o.assigned_driver) as Driver,
         (select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
         (select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #", 
         (select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name", 
         (select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
+         (select jobs.unit_pay from jobs where id = o.owner_id) as "type",
         (select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
         as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
-        left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c on 
+        left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c  on 
         c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '%s' ORDER by o.ending_time desc LIMIT 1 offset %s
-        
-         
         """ % (date, offset)
         cursor.execute(query)
         results = cursor.fetchall()
@@ -185,17 +193,32 @@ def voo():
                 'company_truck': row['Company Truck #'],
                 'cell_phone': row['driver_phone'],
                 'owner_id': row['owner_id'],
+                'job_code': row['job_code'],
                 'date': date,
-                'thecount':thecount
+                'thecount':thecount,
+                'unit_pay':row['type']
+                
             })
+            cn = row['Customer Name']
             print data
-     
+
+        query = """
+        SELECT pick_address, delivery_address from jobs where customer_comp_name = '%s' 
+                """% (cn)
+        cursor.execute(query)
+        results = cursor.fetchall()
+        for row in results:
+            pa = row['pick_address']
+            da = row['delivery_address']
+            
+            #print pa
+            #print da
         counter += 1
-           
-        
+             
     except:
+        
         print "Error:" , sys.exc_info()[0]
-    return render_template('voo.html',data=data, counter=counter)
+    return render_template('voo.html',data=data, counter=counter, pa=pa, da=da)
     return jsonify('data',data)
 
 

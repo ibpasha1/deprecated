@@ -99,7 +99,7 @@
 		</script>
 		<div id="result"></div>
 		<span class="divLeft">
-			<img class="materialboxed" width="500" height="500" src="http://aggdirect.com/task_proof_images/{{row['proof_picture']}}">
+			<img class="materialboxed" width="500" height="530" src="http://aggdirect.com/task_proof_images/{{row['proof_picture']}}">
 			<ul class="collection">
 				<li class="collection-item">
 					<div class="btn-group">
@@ -137,40 +137,34 @@
 				<span class="title">Owner:</span>
 				<p>
 					{{row['owner_name']}} <br>
-					{{row['owner_num']}}
-				</p>
-				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
-			</li>
-			<li class="collection-item avatar">
-				<i class="material-icons circle ">clear_all</i>
-				<span class="title">Qty:</span>
-				<p>
-					{{row['qty']}}
+					{{row['owner_num']}}  <br>
+					{{row['company_name']}}
 				</p>
 				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
 			</li>
 			<li class="collection-item avatar">
 				<i class="material-icons circle ">receipt</i>
-				<span class="title">Ticket Number</span>
-				<p>
-					{{row['ticket_num']}}
-				</p>
-				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
-			</li>
-			<li class="collection-item avatar">
-				<i class="material-icons circle ">airport_shuttle</i>
-				<span class="title">Customer Name:</span>
-				<p>
-					{{row['customer_name']}}
-				</p>
+				<span class="title">General Info:</span>
+				Ticket Number:<p>{{row['ticket_num']}}</p>
+				Customer Name:<p>{{row['customer_name']}}</p>
+					   Quanty:<p>{{row['qty']}}:{{row['unit_pay']}}</p> 
 				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
 			</li>
 			<li class="collection-item avatar">
 				<i class="material-icons circle ">business</i>
-				<span class="title">Company Name:</span>
+				<span class="title">Job Code:</span>
 				<p>
-					{{row['company_name']}}
+					{{row['job_code']}}
 				</p>
+				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
+			</li>
+
+			<li class="collection-item avatar">
+				<i class="material-icons circle ">business</i>
+				<span class="title">Delivery/Pickup:</span>
+				<p>Pickup:   {{pa}}</p> <br>
+				<p>Delivery: {{da}}</p>	
+				
 				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
 			</li>
 				<li class="collection-item">

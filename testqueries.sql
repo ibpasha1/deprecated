@@ -517,3 +517,58 @@ def background_process():
 
                                  SELECT COUNT(DISTINCT id) from owner_route_tasks WHERE added_date = '2017-07-01'
                                  SELECT COUNT(id) from owner_route_drivers WHERE date = '2017-07-01'
+
+
+
+
+                                   cm_name  = row['Company Name']
+            cus_name = row['Customer Name']
+            print data
+            print cm_name
+            print cus_name
+
+        query = """
+        SELECT pick_address, delivery_address from jobs where customer_comp_name = '%s' and customer_name = '%s'
+                """% (cm_name, cus_name)
+        cursor.execute(query)
+        results = cursor.fetchall()
+        for row in results:
+            pa = row['pick_address']
+            da = row['delivery_address']
+            
+            print pa
+            print da
+        counter += 1
+
+
+
+
+        SELECT DISTINCT(o.proof_picture), o.job_code, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
+        from drivers d where d.id = o.assigned_driver) as Driver,
+        (select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
+        (select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #", 
+        (select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name", 
+        (select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
+        (select jobs.unit_pay from jobs where id = o.id) as "type",
+        (select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
+        as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
+        left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c  on 
+        c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '2018-01-11' ORDER by o.ending_time desc LIMIT 1 offset 1
+
+
+
+        SELECT DISTINCT(o.proof_picture), o.job_code, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
+        from drivers d where d.id = o.assigned_driver) as Driver,
+        (select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
+        (select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #", 
+        (select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name", 
+        (select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
+        (select job_details.id from job_details where id = t.id) as "test",
+        (select jobs.unit_pay from jobs where id = o.id) as "type",
+        (select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
+        as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
+        left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c  on 
+        c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '2018-01-11' ORDER by o.ending_time desc LIMIT 1 offset 1
+
+
+        select jobs.unit_pay from jobs join owners on owners.id = jobs.id
