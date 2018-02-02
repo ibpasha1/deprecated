@@ -512,3 +512,8 @@ def background_process():
                                     <input id="page_id"  name="offset" type="hidden" >
                                     <input type="submit" class="waves-effect waves-light btn" value="next" onClick="pageUP()">
                                  </form>
+
+
+
+                                 SELECT COUNT(DISTINCT id) from owner_route_tasks WHERE added_date = '2017-07-01'
+                                 SELECT COUNT(id) from owner_route_drivers WHERE date = '2017-07-01'

@@ -68,12 +68,31 @@ def background_thread():
         socketio.emit('message', '1..') 
         print 'wtf'
 
+
+def feed():
+    cursor = db.cursor(pymysql.cursors.DictCursor)
+    query = """
+             SELECT * from owner_route_task_details order by action_timestamp desc LIMIT 1
+            """ 
+    cursor.execute(query)
+    results = cursor.fetchall()
+    if results != 0:
+       socketio.emit('database', 'New Ticket')
+    time.sleep(1)  
+
+@socketio.on('connect')                                                         
+def runFeed():                                                                  
+    global thread                                                               
+    if thread is None:                                                          
+        thread = socketio.start_background_task(target=feed)  
+
+'''
 @socketio.on('connect')                                                         
 def connect():                                                                  
     global thread                                                               
     if thread is None:                                                          
         thread = socketio.start_background_task(target=background_thread)  
-
+'''
         
 def makeUSNumber(num):
     result = re.sub('[^0-9]', '', num)
@@ -91,45 +110,48 @@ def index():
     return render_template('index.html')
     
 
-
-
-
-
-def feed():
-    while True:
-        data = []
-        cursor = db.cursor(pymysql.cursors.DictCursor)
-        now = datetime.now()
-        query = """
-
-        SELECT * from owner_route_task_details where action_timestamp = '%s' 
-
-        """ % (now)
-
-        cursor.execute(query)
-        results = cursor.fetchall()
-        for row in results:
-            data.append({
-                'task_id': row['route_task_id'],
-                'owner': row['owner_id'],
-                'job': row['job_code'],
-                'truck': row['truck_id'],
-            })
-        
-        socketio.emit('database', data)  
+          
 
 
 @app.route("/voo", methods=['GET','POST'])
 def voo(): 
     data = []
-    counter = 0
+    counter = 1
     if request.method == 'POST':
        date   = request.form['date']
        offset  = request.form['offset']
        #counter = request.form['offset']
        cursor = db.cursor(pymysql.cursors.DictCursor)
        counter = offset
+       query = """
+
+        select count(owner_id) from
+ 
+        (SELECT DISTINCT(o.proof_picture), o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname)
+        from drivers d where d.id = o.assigned_driver) as Driver,
+        (select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
+        (select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #",
+        (select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name",
+        (select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
+        (select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
+        as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
+        left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c on
+        c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '%s' ORDER by o.ending_time desc
+        )x
+
+        """ %(date)
+
+        
+       cursor.execute(query)
+       results = cursor.fetchall()
+
+       for row in results:
+           thecount = row['count(owner_id)']
+           print thecount
+            
     try:
+
+        
         
         query = """
        
@@ -144,10 +166,9 @@ def voo():
         as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
         left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c on 
         c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '%s' ORDER by o.ending_time desc LIMIT 1 offset %s
+        
          
-    
         """ % (date, offset)
-
         cursor.execute(query)
         results = cursor.fetchall()
         #import ipdb; ipdb.set_trace()
@@ -164,9 +185,11 @@ def voo():
                 'company_truck': row['Company Truck #'],
                 'cell_phone': row['driver_phone'],
                 'owner_id': row['owner_id'],
-                'date': date
+                'date': date,
+                'thecount':thecount
             })
-            print data 
+            print data
+     
         counter += 1
            
         

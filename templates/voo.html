@@ -64,8 +64,8 @@
 		::-ms-input-placeholder { /* Microsoft Edge */
 			color: red;
 		}
-		input.placeholder {
-			text-align: center;
+		input.datepicker {
+			text-align: center !important;
 		}
 	</style>
 	<body>
@@ -77,7 +77,9 @@
 					<input type="submit" class="waves-effect waves-light btn">
 				</form>
 			</div>
-			<p>page: <a id="page_view"></a></p>
+			<div class="btn-group">
+			<p>page: <a id="page_view"><a>/</a><a id="page_max"></a></p>
+		    </div>
 		</center>
 		</br>
 		{% for row in data %}
@@ -87,6 +89,7 @@
 			foo = Number(foo);
 			uoo = "{{row['owner_id']}}";
 			boo = "{{row['owner_id']}}";
+			page_max = "{{row['thecount']}}";
 
 			driver_name = "{{row['driver']}}";
 			the_owner   = "{{row['owner_name']}}";
@@ -203,7 +206,8 @@
 				document.getElementById('next-text').placeholder = coo;
 
 				document.getElementById('back-offset').value = ((foo - 1) < 0) ? 0 : foo - 1;
-				document.getElementById('next-offset').value = foo + 1;
+				document.getElementById('next-offset').value = ((foo + 1) > page_max - 1) ? page_max - 1 : foo + 1;
+			
 				document.getElementById("thedatefield").placeholder = coo;
 
 				document.getElementById('confirmed_image').value = boo;
@@ -216,6 +220,8 @@
 				document.getElementById('tk_num').value         = tk_num;
 				document.getElementById('com_name').value       = com_name;
 				document.getElementById('current_date').value   = current_date;
+				//------------count variable-----------------///
+				$('#page_max').html(page_max);
 					
 				var socket = io.connect('http://' + document.domain + ':' + location.port);
 				//var socket = io.connect('http://127.0.0.1:5000');
