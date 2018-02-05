@@ -30,7 +30,7 @@ socketio = SocketIO(app)
 async_mode = None
 thread = None
 thread_lock = Lock()
-#socketio = SocketIO(app, async_mode=async_mode)
+socketio = SocketIO(app, async_mode=async_mode)
 app.config['UPLOAD_FOLDER'] = PEOPLE_FOLDER
 '''
 client.api.account.messages.create(
@@ -44,73 +44,34 @@ def handleMessage(msg):
     for i in range(0,10):
 	    emit('message', {'hello': "Hello"})
 '''
-'''
-def background_thread():                                                        
-    while True:                                                                 
-        socketio.emit('message', 'Welcome - Socket Begin...')                   
-        time.sleep(5)
-        socketio.emit('message', 'testing connection to backend') 
-        time.sleep(5)
-        socketio.emit('message', 'connection pending......') 
-        time.sleep(5)
-        socketio.emit('message', 'connection established') 
-        time.sleep(5)
-        socketio.emit('message', 'looping content in.....') 
-        time.sleep(1)
-        socketio.emit('message', '5..') 
-        time.sleep(1)
-        socketio.emit('message', '4..') 
-        time.sleep(1)
-        socketio.emit('message', '3..')
-        time.sleep(1)
-        socketio.emit('message', '2..')
-        time.sleep(1)
-        socketio.emit('message', '1..') 
-        print 'wtf'
-'''
 
-def feed():
-    cursor = db.cursor(pymysql.cursors.DictCursor)
-    query = """
-            SELECT action_timestamp from owner_route_task_details order by action_timestamp desc LIMIT 1
+def background_thread():
+    while True:
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+        query = """
+            SELECT tk_num, com_name from image_verified order by timestamp desc LIMIT 1
             """
     
-    cursor.execute(query)
-    results = cursor.fetchall()
+        cursor.execute(query)
+        results = cursor.fetchall()
         
-    for row in results:
-        t1 = row['action_timestamp']
-        print t1
+        for row in results:
+            t1 = row['tk_num']
+            t2 = row['com_name']
+            print t1
+            message = 'Lastest Ticket' + '-'+  str(t1)  + '-'+  str(t2)
+            socketio.emit('message', message)
+            time.sleep(10)
     
-    time.sleep(5)
-    
-    query = """
-            SELECT action_timestamp from owner_route_task_details order by action_timestamp desc LIMIT 1
-            """
-
-    for row in results:
-        t2 = row['action_timestamp']
-        print t2
-    
-    if t2 > t1:
-        socketio.emit('database', 'New Ticket') 
-    cursor.close()
 
 
-
-@socketio.on('connect')                                                         
-def runFeed():                                                                  
-    global thread                                                               
-    if thread is None:                                                          
-        thread = socketio.start_background_task(target=feed)  
-
-'''
 @socketio.on('connect')                                                         
 def connect():                                                                  
     global thread                                                               
     if thread is None:                                                          
         thread = socketio.start_background_task(target=background_thread)  
-'''
+
+
         
 def makeUSNumber(num):
     result = re.sub('[^0-9]', '', num)
@@ -132,8 +93,10 @@ def voo():
     data = []
     counter = 1
     if request.method == 'POST':
-       date   = request.form['date']
-       offset  = request.form['offset']
+       date          = request.form['date']
+       offset        = request.form['offset']
+       img_status    = request.form['img_status']
+       retake_status = request.form['retake_status']
        #counter = request.form['offset']
        cursor = db.cursor(pymysql.cursors.DictCursor)
        counter = offset
@@ -172,6 +135,7 @@ def voo():
         (select jobs.unit_pay from jobs where id = o.owner_id) as "type1",
         (select jobs.pick_address from jobs where id = o.owner_id) as "type2",
         (select jobs.delivery_address from jobs where id = o.owner_id) as "type3",
+        (select image_verified.confirmed from image_verified where id = o.owner_id) as "type4",
         (select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
         as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
         left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c  on 
@@ -198,11 +162,38 @@ def voo():
                 'thecount':thecount,
                 'unit_pay':row['type1'],
                 'pick_address':row['type2'],
-                'delivery_address':row['type3']
-                
-                
+                'delivery_address':row['type3'],
+                'confirmed': row['type4']
             })
-           
+            owner_id    = row['owner_id']
+            confirmed   = 'Confirmed'
+            SMS         = 'SMS Sent'
+            driver_name = row['Driver']
+            the_owner   = row['Owner']
+            tk_num      = row['ticket_number']
+            com_name    = row['Company Name']
+            curr_date   = date
+            now         = datetime.now()
+            cell        = row['Owner Phone#']
+        print img_status
+        print retake_status
+        if img_status == '1':
+            cursor = db.cursor(pymysql.cursors.DictCursor)
+            cursor.execute("INSERT INTO image_verified(owner_id,confirmed,driver_name,the_owner,tk_num,com_name,curr_date,timestamp) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)", (owner_id, confirmed,driver_name,the_owner,tk_num,com_name,curr_date,now))
+            db.commit()
+            cursor.close()
+        elif retake_status == '1':
+            cursor = db.cursor(pymysql.cursors.DictCursor)
+            cursor.execute("INSERT INTO image_verified(owner_id,confirmed,driver_name,the_owner,tk_num,com_name,curr_date,timestamp) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)", (owner_id, SMS,driver_name,the_owner,tk_num,com_name,curr_date,now))
+            db.commit()
+            cursor.close()
+            client.api.account.messages.create(
+              to=cell, #change to cell for real numbers - using my number right now so I dont bother people
+              from_="+17727424910",
+              body="Please retake your picture--sorry testing---Disregard!")
+
+        
+
         counter += 1
              
     except:
@@ -213,88 +204,11 @@ def voo():
 
 
 
-@app.route("/confirmed_image", methods=['GET','POST'])
-def confirmed_image():
-    if request.method == 'POST':
-       owner_id     = request.form['owner_id']
-       confirmed    = 'Confirmed'
-       driver_name  = request.form['driver_name']
-       the_owner    = request.form['the_owner']
-       tk_num       = request.form['tk_num']
-       com_name     = request.form['com_name']
-       curr_date    = request.form['curr_date']
-       #user_id  = randint(1, 100)
-       now = datetime.now()
-       cursor = db.cursor(pymysql.cursors.DictCursor)
-       print owner_id
-       cursor.execute("INSERT INTO image_verified(owner_id,confirmed,driver_name,the_owner,tk_num,com_name,curr_date,timestamp) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)", (owner_id, confirmed,driver_name,the_owner,tk_num,com_name,curr_date,now))
-       db.commit()
-       cursor.close()
-       return render_template('confirmed_image.html')
-     
 
-@app.route("/retake_picture", methods=['GET','POST'])
-def retake_picture():
-    data = []
-    if request.method == 'POST':
-       owner_id = request.form['owner_id']
-       tk_num       = request.form['tk_num']
-       now = datetime.now()
-       cursor = db.cursor(pymysql.cursors.DictCursor)
-       print owner_id
-    try:
-
-        query = """
-
-        SELECT 
-        owner_route_task_details.owner_id,owner_route_task_details.truck_id,owner_route_task_details.route_task_id,owner_route_task_details.job_code,
-        drivers.fname, drivers.lname, drivers.cellphone
-        FROM owner_route_task_details 
-        INNER JOIN drivers
-              ON owner_route_task_details.owner_id = drivers.owner_id
-        WHERE owner_route_task_details.owner_id = '%s' 
-        GROUP BY owner_route_task_details.owner_id
-
-        """ % (owner_id)
-
-        cursor.execute(query)
-        results = cursor.fetchall()
-        #import ipdb; ipdb.set_trace()
-        for row in results:
-            data.append({
-                'fname': row['fname'],
-                'lname': row['lname'],
-                'cellphone': row['cellphone']
-            })
-            time       = datetime.now()
-            cell       = row['cellphone']
-            first_name = row['fname']
-            last_name  = row['lname']
-            tkid       = row['truck_id']
-            route_task = row['route_task_id']
-            jobe_code  = row['job_code']
-            ownerid    = row['owner_id']
-            fname      = row['fname']
-            lname      = row['lname']
-            print data
-        cursor.execute("INSERT INTO SMS (route_task_id, owner_id, truck_id, tk_num, fname, lname, cellphone, timestamp) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)", (route_task, ownerid, tkid,tk_num,fname,lname,cell,time))
-        cursor.execute(query)
-        db.commit()
-        cursor.close()
-        #hell = 2409387539
-        #cell = makeUSNumber(cell)
-        client.api.account.messages.create(
-           to=cell, #change to cell for real numbers - using my number right now so I dont bother people
-           from_="+17727424910",
-           body="Please retake your picture--sorry testing---Disregard!")
-    except:
-        print "Error:" , sys.exc_info()[0]
-    return render_template('retake_confirmed.html')
-    return jsonify('data',data)
 
 
 if __name__ == "__main__":
     #app.secret_key = 'secret123'
     #app.run(debug=True)
-    socketio.run(app)
+    socketio.run(app, debug=True)
     

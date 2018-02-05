@@ -2,9 +2,9 @@
 <html>
 	<head>
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+		<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-		<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
 		<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 	</head>
 	<style type="text/css">
@@ -74,6 +74,8 @@
 				<form action="/voo" method="post">
 					<input  placeholder="" id="thedatefield" type="text" class="datepicker" name="date" placeholder="">
 					<input id="id" name="offset" type="hidden" value="1">
+					<input type="hidden" id="img_status"       name="img_status"    value="0">
+					<input type="hidden" id="retake_status"    name="retake_status" value="0">
 					<input type="submit" class="waves-effect waves-light btn">
 				</form>
 			</div>
@@ -83,7 +85,10 @@
 		</center>
 		</br>
 		{% for row in data %}
+		
 		<script type="text/javascript">
+		    
+			joo = "{{row['confirmed']}}";
 			coo = "{{row['date']}}";
 			foo = "{{counter}}";
 			foo = Number(foo);
@@ -99,29 +104,30 @@
 
 			
 		</script>
-		<div id="result"></div>
 		<span class="divLeft">
 			<img class="materialboxed" width="500" height="530" src="http://aggdirect.com/task_proof_images/{{row['proof_picture']}}">
 			<ul class="collection">
 				<li class="collection-item">
 					<div class="btn-group">
-						<form action="/confirmed_image" method="post" >
-							<input type="hidden" id="confirmed_image" name="owner_id" >
-							<input type="hidden" id="driver_name"     name="driver_name" >
-							<input type="hidden" id="the_owner"       name="the_owner" >
-							<input type="hidden" id="tk_num"          name="tk_num" >
-							<input type="hidden" id="com_name"        name="com_name" >
-							<input type="hidden" id="current_date"    name="curr_date" >
-							<button type="submit" onclick="formSubmit()" >verify</button>
+						<form action="/voo" method="post">
+							<input type="hidden" id="back-text-1"      name="date">
+							<input type="hidden" id="back-offset-1"    name="offset">
+							<input type="hidden" id="img_status"       name="img_status"    value="1">
+							<input type="hidden" id="retake_status"    name="retake_status" value="0">
+							<button id="Vbutton" type="submit">verify image</button>
 						</form>
-						<form action="/retake_picture" method="post">
-							<input type="hidden" id="retake_image" name="owner_id" >
-							<input type="hidden" id="tk_num"       name="tk_num" >
-							<button type="submit">retake</button>
+						<form action="/voo" method="post">
+							<input type="hidden" id="next-text-1"      name="date">
+							<input type="hidden" id="next-offset-1"    name="offset">
+							<input type="hidden" id="retake_status"    name="retake_status" value="1">
+							<input type="hidden" id="img_status"       name="img_status"    value="0">
+							<button id="Rbutton" type="submit">retake request</button>
 						</form>
+						
 					</div>
 				</li>
 			</ul>
+			
 		</span>
 		<span class="divRight">
 			<ul class="collection">
@@ -132,6 +138,7 @@
 				<p>
 					{{row['driver']}} <br>
 					{{row['cell_phone']}}
+					
 				</p>
 				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
 			</li>
@@ -173,13 +180,17 @@
 				<li class="collection-item">
 					<div class="btn-group">
 						<form action="/voo" method="post">
-							<input type="hidden" id="back-text"   name="date">
-							<input type="hidden" id="back-offset" name="offset">
+							<input type="hidden" id="back-text"        name="date">
+							<input type="hidden" id="back-offset"      name="offset">
+							<input type="hidden" id="img_status"       name="img_status"    value="0">
+        					<input type="hidden" id="retake_status"    name="retake_status" value="0">
 							<button type="submit">back</button>
 						</form>
 						<form action="/voo" method="post" id="next_form">
-							<input type="hidden" id="next-text"   name="date">
-							<input type="hidden" id="next-offset" name="offset">
+							<input type="hidden" id="next-text"        name="date">
+							<input type="hidden" id="next-offset"      name="offset">
+							<input type="hidden" id="img_status"       name="img_status"    value="0">
+         					<input type="hidden" id="retake_status"    name="retake_status" value="0">
 							<button type="submit">next</button>
 						</form>
 					</div>
@@ -190,6 +201,29 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
 		<script text="text/javascript">
 			$( document ).ready(function() {
+
+		
+
+
+				var socket = io.connect('http://' + document.domain + ':' + location.port);
+				
+				//var socket = io.connect('http://127.0.0.1:5000');
+				var socket = io.connect('http://' + document.domain + ':' + location.port);
+                 socket.on('connect',function() {
+                    socket.send('testing');
+                 
+                 });
+                 socket.on('message', function(msg) {
+                    Materialize.toast(msg, 1000)
+                 });
+
+				 socket.on('image_request', function(msg) {
+                    Materialize.toast(msg, 1000)
+                 });
+
+				 
+
+
 				$('.datepicker').pickadate({
 					selectMonths: true, // Creates a dropdown to control month
 					selectYears: 15, // Creates a dropdown of 15 years to control year,
@@ -197,14 +231,25 @@
 					closeOnSelect: false // Close upon selecting a date,
 				});
 
-				function formSubmit() {
-				document.getElementById("next_form").submit();
-				}
+				
+
+				$('#page_view').html(foo);
+				$('#page_max').html(page_max);
+				
 				
 				document.getElementById('back-text').value = coo;
 				document.getElementById('back-text').placeholder = coo;
 				document.getElementById('next-text').value = coo;
 				document.getElementById('next-text').placeholder = coo;
+				//--------------------------------------------------------
+				document.getElementById('back-text-1').value = coo;
+				document.getElementById('back-text-1').placeholder = coo;
+				document.getElementById('next-text-1').value = coo;
+				document.getElementById('next-text-1').placeholder = coo;
+
+				document.getElementById('back-offset-1').value = ((foo + 1) > page_max - 1) ? page_max - 1 : foo + 1;
+				document.getElementById('next-offset-1').value = ((foo + 1) > page_max - 1) ? page_max - 1 : foo + 1;
+				//--------------------------------------------------------
 
 				document.getElementById('back-offset').value = ((foo - 1) < 0) ? 0 : foo - 1;
 				document.getElementById('next-offset').value = ((foo + 1) > page_max - 1) ? page_max - 1 : foo + 1;
@@ -213,8 +258,16 @@
 
 				document.getElementById('confirmed_image').value = boo;
 				document.getElementById('retake_image').value    = uoo;
+				//--------------------------------------------------------
+				if (joo == 'confirmed') {
+					document.getElementById("Vbutton").disabled = true;
+					document.getElementById("Rbutton").disabled = true;
+				} else {
+					document.getElementById("Vbutton").disabled = false;
+					document.getElementById("Rbutton").disabled = false;
+				}
 
-				$('#page_view').html(foo);
+				
 				//------------confirmed image variables-----------------///
 				document.getElementById('driver_name').value    = driver_name;
 				document.getElementById('the_owner').value      = the_owner;
@@ -222,23 +275,10 @@
 				document.getElementById('com_name').value       = com_name;
 				document.getElementById('current_date').value   = current_date;
 				//------------count variable-----------------///
-				$('#page_max').html(page_max);
-					
-				var socket = io.connect('http://' + document.domain + ':' + location.port);
-				//var socket = io.connect('http://127.0.0.1:5000');
-				socket.on('connect', function() {
-					socket.send('User has connected! - Welcome to AggDirect');
-				});
 				
-				socket.on('message', function(data) {
-					console.log('Received message');
-					Materialize.toast(data, 4000)
-				});
-
-				socket.on('database', function(data) {
-					console.log('Received message');
-					Materialize.toast(data, 4000)
-				});
+			 
+		
+						
 			
 			});
 			
