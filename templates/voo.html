@@ -96,6 +96,8 @@
 			tk_num      = "{{row['ticket_num']}}";
 			com_name    = "{{row['company_name']}}";
 			current_date= "{{row['date']}}";
+
+			
 		</script>
 		<div id="result"></div>
 		<span class="divLeft">
@@ -103,14 +105,14 @@
 			<ul class="collection">
 				<li class="collection-item">
 					<div class="btn-group">
-						<form action="/confirmed_image" method="post">
+						<form action="/confirmed_image" method="post" >
 							<input type="hidden" id="confirmed_image" name="owner_id" >
 							<input type="hidden" id="driver_name"     name="driver_name" >
 							<input type="hidden" id="the_owner"       name="the_owner" >
 							<input type="hidden" id="tk_num"          name="tk_num" >
 							<input type="hidden" id="com_name"        name="com_name" >
 							<input type="hidden" id="current_date"    name="curr_date" >
-							<button type="submit">verify</button>
+							<button type="submit" onclick="formSubmit()" >verify</button>
 						</form>
 						<form action="/retake_picture" method="post">
 							<input type="hidden" id="retake_image" name="owner_id" >
@@ -175,7 +177,7 @@
 							<input type="hidden" id="back-offset" name="offset">
 							<button type="submit">back</button>
 						</form>
-						<form action="/voo" method="post">
+						<form action="/voo" method="post" id="next_form">
 							<input type="hidden" id="next-text"   name="date">
 							<input type="hidden" id="next-offset" name="offset">
 							<button type="submit">next</button>
@@ -194,7 +196,11 @@
 					format: 'yyyy-mm-dd',
 					closeOnSelect: false // Close upon selecting a date,
 				});
-			
+
+				function formSubmit() {
+				document.getElementById("next_form").submit();
+				}
+				
 				document.getElementById('back-text').value = coo;
 				document.getElementById('back-text').placeholder = coo;
 				document.getElementById('next-text').value = coo;

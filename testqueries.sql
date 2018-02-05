@@ -572,3 +572,18 @@ def background_process():
 
 
         select jobs.unit_pay from jobs join owners on owners.id = jobs.id
+
+
+
+
+        <div class="btn-group">
+						  <p>
+							<input type="checkbox" id="i1" />
+							<label for="i1">Verify Image</label>
+							<p id="i1"></p>
+						  |
+							<input type="checkbox" id="i2" />
+							<label for="i2">Retake Request</label>
+							<p id="i2"></p>
+						  </p>
+					</div>
