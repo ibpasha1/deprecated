@@ -44,7 +44,7 @@ def handleMessage(msg):
 	for i in range(0,10):
 		emit('message', {'hello': "Hello"})
 '''
-'''
+
 def background_thread():
 	while True:
 		cursor = db.cursor(pymysql.cursors.DictCursor)
@@ -62,15 +62,15 @@ def background_thread():
 			message = 'Lastest Ticket' + '-'+  str(t1)  + '-'+  str(t2)
 			socketio.emit('message', message)
 			time.sleep(10)
-'''   
 
-'''
+
+
 @socketio.on('connect')                                                         
 def connect():                                                                  
 	global thread                                                               
 	if thread is None:                                                          
 		thread = socketio.start_background_task(target=background_thread)  
-'''
+
 
 		
 def makeUSNumber(num):
@@ -110,6 +110,33 @@ def verify():
 		db.commit()
 		cursor.close()
 	return "success"
+
+@app.route("/retake", methods=['GET','POST'])
+def retake():
+	if request.method == 'POST':
+		print "REQ OBJ:"
+		print request.form
+		owner_id     = request.form['owner_id']
+		confirmed    = '1'
+		SMS          = '0'
+		driver_name  = request.form['driver_name']
+		the_owner    = request.form['the_owner']
+		tk_num       = request.form['tk_num']
+		com_name     = request.form['com_name']
+		curr_date    = request.form['curr_date']
+		cellphone    = request.form['cellphone']
+		#user_id  = randint(1, 100)
+		now = datetime.now()
+		cursor = db.cursor(pymysql.cursors.DictCursor)
+		print owner_id
+		cursor.execute("INSERT INTO image_verified(owner_id,confirmed,driver_name,the_owner,tk_num,com_name,curr_date,cell,timestamp) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)", (owner_id, SMS,driver_name,the_owner,tk_num,com_name,curr_date,cellphone,now))
+		db.commit()
+		cursor.close()
+		client.api.account.messages.create(
+				to=cellphone, #change to cell for real numbers - using my number right now so I dont bother people
+				from_="+17727424910",
+				body="Please retake your picture--sorry testing---Disregard!")
+	return "success"	
 
 @app.route("/voo", methods=['GET','POST'])
 def voo(): 
@@ -222,24 +249,7 @@ def voo():
 			print "THE QUERY IS WORKING"
 			status = row['confirmed']
 
-		#print img_status
-		#print retake_status
-		#print data
-		if img_status == '1':
-			cursor = db.cursor(pymysql.cursors.DictCursor)
-			cursor.execute("INSERT INTO image_verified(owner_id,confirmed,driver_name,the_owner,tk_num,com_name,curr_date,cell,timestamp) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)", (owner_id, confirmed,driver_name,the_owner,tk_num,com_name,curr_date,cell,now))
-			db.commit()
-			cursor.close()
-			print "############################# here"
-		elif retake_status == '1':
-			cursor = db.cursor(pymysql.cursors.DictCursor)
-			cursor.execute("INSERT INTO image_verified(owner_id,confirmed,driver_name,the_owner,tk_num,com_name,curr_date,cell,timestamp) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)", (owner_id, SMS,driver_name,the_owner,tk_num,com_name,curr_date,cell,now))
-			db.commit()
-			cursor.close()
-			client.api.account.messages.create(
-				to=cell, #change to cell for real numbers - using my number right now so I dont bother people
-				from_="+17727424910",
-				body="Please retake your picture--sorry testing---Disregard!")
+		
 
 		counter += 1
 		print counter
