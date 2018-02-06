@@ -587,3 +587,35 @@ def background_process():
 							<p id="i2"></p>
 						  </p>
 					</div>
+
+
+        SELECT DISTINCT(o.proof_picture), o.job_code, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
+        from drivers d where d.id = o.assigned_driver) as Driver,
+        (select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
+        (select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #", 
+        (select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name", 
+        (select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
+        (select jobs.unit_pay from jobs where id = o.owner_id) as "type1",
+        (select jobs.pick_address from jobs where id = o.owner_id) as "type2",
+        (select jobs.delivery_address from jobs where id = o.owner_id) as "type3",
+        (select image_verified.confirmed from image_verified where id = o.owner_id) as "type4",
+        (select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
+        as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
+        left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c  on 
+        c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '%s' ORDER by o.ending_time desc LIMIT 1 offset %s
+
+
+        SELECT DISTINCT(o.proof_picture), o.job_code, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
+        from drivers d where d.id = o.assigned_driver) as Driver,
+        (select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
+        (select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #", 
+        (select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name", 
+        (select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
+        (select jobs.unit_pay from jobs where id = o.owner_id) as "type1",
+        (select jobs.pick_address from jobs where id = o.owner_id) as "type2",
+        (select jobs.delivery_address from jobs where id = o.owner_id) as "type3",
+        (select image_verified.confirmed from image_verified where cell = ow.cell_phone) as "type4",
+        (select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
+        as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
+        left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c  on 
+        c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '2017-07-01' ORDER by o.ending_time desc LIMIT 1 offset 1
