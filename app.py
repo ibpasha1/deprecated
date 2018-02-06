@@ -23,7 +23,8 @@ auth_token  = "67edc7ccf6675e798d2c6f88a93e0851"
 client = Client(account_sid, auth_token)
 PEOPLE_FOLDER = os.path.join('static', 'people_photo')
 time.strftime('%Y-%m-%d %H:%M:%S')
-db = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local')
+db = pymysql.connect(host='aggdirect.cflbgllnrj45.us-east-1.rds.amazonaws.com', port=3306, user='bulldog', passwd='AThousandRoads2357', db='aggdirect')
+#db = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local')
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
@@ -32,46 +33,68 @@ thread = None
 thread_lock = Lock()
 socketio = SocketIO(app, async_mode=async_mode)
 app.config['UPLOAD_FOLDER'] = PEOPLE_FOLDER
-'''
-client.api.account.messages.create(
-	to="2409387539",
-	from_="+17727424910",
-	body="Hello there!")
-'''
-'''
-@socketio.on('message')
-def handleMessage(msg):
-	for i in range(0,10):
-		emit('message', {'hello': "Hello"})
-'''
 
 def background_thread():
 	while True:
+		current_date = '2018-02-06'
 		cursor = db.cursor(pymysql.cursors.DictCursor)
 		query = """
-			SELECT tk_num, com_name from image_verified order by timestamp desc LIMIT 1
-			"""
-	
+		SELECT DISTINCT(o.proof_picture), o.id,o.ending_time, o.job_code, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
+		from drivers d where d.id = o.assigned_driver) as Driver,
+		(select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
+		(select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #", 
+		(select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name", 
+		(select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
+		(select jobs.unit_pay from jobs where id = o.owner_id) as "type1",
+		(select jobs.pick_address from jobs where id = o.owner_id) as "type2",
+		(select jobs.delivery_address from jobs where id = o.owner_id) as "type3",
+		(select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
+		as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
+		left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c  on 
+		c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '%s' ORDER by o.ending_time desc LIMIT 1 
+		""" %(current_date)
 		cursor.execute(query)
 		results = cursor.fetchall()
-		
 		for row in results:
-			t1 = row['tk_num']
-			t2 = row['com_name']
-			print t1
-			message = 'Lastest Ticket' + '-'+  str(t1)  + '-'+  str(t2)
-			socketio.emit('message', message)
-			time.sleep(10)
-
+			t1 = row['Driver']
+			t2 = row['job_code']
+			#t0 = row['id']
+			payload1 = 'Lastest Ticket' + '-' +  str(t1)  + '-'+  str(t2)
+			#payload2 = t0
+			socketio.emit('message', payload1)
+			#socketio.emit('info', payload2)
+			socketio.sleep(10)
+		current_date = '2018-02-06'
+		cursor = db.cursor(pymysql.cursors.DictCursor)
+		query = """
+		select count(owner_id) from
+			(SELECT DISTINCT(o.proof_picture),o.id,o.ending_time, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname)
+			from drivers d where d.id = o.assigned_driver) as Driver,
+			(select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
+			(select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #",
+			(select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name",
+			(select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
+			(select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
+			as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
+			left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c on
+			c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '%s' ORDER by o.ending_time desc
+			)y
+			""" %(current_date)
+		cursor.execute(query)
+		results = cursor.fetchall()
+		for row in results:
+			thecount = row['count(owner_id)']
+			socketio.emit('count', thecount)
+			#socketio.emit('page_date', current_date )
+			socketio.sleep(10)
+		cursor.close()
 
 
 @socketio.on('connect')                                                         
-def connect():                                                                  
+def feedLoop():                                                                  
 	global thread                                                               
 	if thread is None:                                                          
-		thread = socketio.start_background_task(target=background_thread)  
-
-
+		thread = socketio.start_background_task(target=background_thread) 
 		
 def makeUSNumber(num):
 	result = re.sub('[^0-9]', '', num)
@@ -98,7 +121,7 @@ def verify():
 		SMS          = '0'
 		driver_name  = request.form['driver_name']
 		the_owner    = request.form['the_owner']
-		tk_num       = request.form['tk_num']
+		tk_num       = request.form['the_id']
 		com_name     = request.form['com_name']
 		curr_date    = request.form['curr_date']
 		cellphone    = request.form['cellphone']
@@ -121,7 +144,7 @@ def retake():
 		SMS          = '0'
 		driver_name  = request.form['driver_name']
 		the_owner    = request.form['the_owner']
-		tk_num       = request.form['tk_num']
+		tk_num       = request.form['the_id']
 		com_name     = request.form['com_name']
 		curr_date    = request.form['curr_date']
 		cellphone    = request.form['cellphone']
@@ -182,7 +205,7 @@ def voo():
 		print counter
 	try:
 		query = """
-		SELECT DISTINCT(o.proof_picture), o.job_code, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
+		SELECT DISTINCT(o.proof_picture),o.id, o.job_code, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
 		from drivers d where d.id = o.assigned_driver) as Driver,
 		(select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
 		(select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #", 
@@ -194,7 +217,7 @@ def voo():
 		(select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
 		as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
 		left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c  on 
-		c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '%s' ORDER by o.ending_time desc LIMIT 1 offset %s
+		c.id = j.customer_id  WHERE o.proof_picture <> 'Null' and o.date = '%s' ORDER by o.ending_time asc LIMIT 1 offset %s
 		""" % (date, offset)
 		cursor.execute(query)
 		results = cursor.fetchall()
@@ -223,8 +246,11 @@ def voo():
 				'thecount':thecount,
 				'unit_pay':row['type1'],
 				'pick_address':row['type2'],
-				'delivery_address':row['type3']
+				'delivery_address':row['type3'],
+				'id':row['id']
+				
 			})
+			print data
 			owner_id    = row['owner_id']
 			confirmed   = '1'
 			SMS         = '0'
@@ -235,12 +261,13 @@ def voo():
 			curr_date   = date
 			now         = datetime.now()
 			cell        = row['driver_phone']
-	
+			the_id      = row['id']
+		
 		cursor = db.cursor(pymysql.cursors.DictCursor)
-		print "FUKU: " + tk_num
+		print "FUKU: " + the_id
 		query = """
 			SELECT confirmed from image_verified where tk_num = '%s'
-			""" % (tk_num)
+			""" % (the_id)
 		print "THE QUERY IS: "
 		print query
 		cursor.execute(query)
@@ -248,11 +275,12 @@ def voo():
 		for row in results:
 			print "THE QUERY IS WORKING"
 			status = row['confirmed']
-
+	
 		
 
 		counter += 1
 		print counter
+		
 		
 	except:
 		print "Error:" , sys.exc_info()[0]

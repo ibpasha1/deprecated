@@ -9,12 +9,12 @@
 	</head>
 	<style type="text/css">
 		.divLeft {
-		width:500px;
+		width:700px;
 		display:block;
 		float: left;
 		}
 		.divRight {
-		width:500px;
+		width:700px;
 		display:block;
 		float: right;
 		}
@@ -93,12 +93,15 @@
 		<script type="text/javascript">
 		    var soo = '';
 			soo = "{{status}}";
-			coo = "{{row['date']}}";
+			var coo = "{{row['date']}}";
 			foo = "{{counter}}";
-			foo = Number(foo);
+			var foo = Number(foo);
 			uoo = "{{row['owner_id']}}";
 			boo = "{{row['owner_id']}}";
 			page_max = "{{row['thecount']}}";
+			job_code = "{{row['job_code']}}";
+			job_code = Number(job_code);
+			
 
 			driver_name = "{{row['driver']}}";
 			console.log(driver_name);
@@ -114,11 +117,12 @@
 			console.log(cellphone);
 			owner_id   = "{{row['owner_id']}}";
 			console.log(owner_id);
-
+			the_id   = "{{row['the_id']}}";
+			console.log(the_id);
 			
 		</script>
 		<span class="divLeft">
-			<img class="materialboxed" width="500" height="530" src="http://aggdirect.com/task_proof_images/{{row['proof_picture']}}">
+			<img class="materialboxed" width="700" height="500" src="http://aggdirect.com/task_proof_images/{{row['proof_picture']}}">
 			<ul class="collection">
 				<li class="collection-item">
 					<div class="btn-group">
@@ -130,7 +134,7 @@
 							<input type="hidden" id="owner_id"         name="owner_id" >
 							<input type="hidden" id="driver_name"      name="driver_name" >
 							<input type="hidden" id="the_owner"        name="the_owner" >
-							<input type="hidden" id="tk_num"           name="tk_num" >
+							<input type="hidden" id="the_id"           name="the_id" >
 							<input type="hidden" id="com_name"         name="com_name" >
 							<input type="hidden" id="curr_date"        name="curr_date" >
 							<input type="hidden" id="cellphone"        name="cellphone" >
@@ -144,7 +148,7 @@
 							<input type="hidden"  id="owner_id2"         name="owner_id" >
 							<input type="hidden"  id="driver_name2"      name="driver_name" >
 							<input type="hidden"  id="the_owner2"        name="the_owner" >
-							<input type="hidden"  id="tk_num2"           name="tk_num" >
+							<input type="hidden"  id="the_id2"           name="the_id" >
 							<input type="hidden"  id="com_name2"         name="com_name" >
 							<input type="hidden"  id="curr_date2"        name="curr_date" >
 							<input type="hidden"  id="cellphone2"        name="cellphone" >
@@ -237,7 +241,7 @@
 
 			function clickVerify() {
 				console.log("CLICK  VERFIY");
-				Materialize.toast('Verify Image complete', 1000)
+				Materialize.toast('Verify Image complete', 1000,'green')
 				// var date         =$('#back-text-1').val()
 				// var offset       =$('#back-offset-1').val()
 				// var img_status   =$('#img_status').val()
@@ -262,9 +266,39 @@
 				});
 			}
 
+
+			function getPage() {
+				console.log("page bro");
+				Materialize.toast('Retake request sent to driver', 1000,'yellow')
+				// var date         =$('#back-text-1').val()
+				// var offset       =$('#back-offset-1').val()
+				// var img_status   =$('#img_status').val()
+				// var retake_status=$('#retake_status').val()
+				// var owner_id     =$('#confirmed_image').val()
+				// var driver_name  =$('#driver_name').val()
+				// var the_owner    =$('#the_owner').val()
+				// var tk_num       =$('#tk_num').val()
+				// var com_name     =$('#com_name').val()
+				// var curr_date    =$('#current_date').val()
+				// var cellphone    =$('#cellphone').val()
+				console.log("IMG FORM SERLIZ: " + $('#retake_form').serialize());
+				$.ajax({
+					url: '/retake',
+					data: $('#retake_form').serialize(),
+					type: 'POST',
+					success: function(response) {
+						$("#nextPageBtn").click();
+						//I need to some how be able to populate my table with the returned list called jobs;
+					},
+					error: function(error) {}
+				});
+			}
+
+
+
 			function clickRetake() {
 				console.log("CLICK  VERFIY");
-				Materialize.toast('Retake request sent to driver', 1000)
+				Materialize.toast('Retake request sent to driver', 1000,'yellow')
 				// var date         =$('#back-text-1').val()
 				// var offset       =$('#back-offset-1').val()
 				// var img_status   =$('#img_status').val()
@@ -290,6 +324,13 @@
 			}
 
 			$( document ).ready(function() {
+
+				$('.datepicker').pickadate({
+					selectMonths: true, // Creates a dropdown to control month
+					selectYears: 15, // Creates a dropdown of 15 years to control year,
+					format: 'yyyy-mm-dd',
+					closeOnSelect: false // Close upon selecting a date,
+				});
 				soo = "{{status}}";
 
 				if (soo == 1) {
@@ -312,29 +353,34 @@
 				//var socket = io.connect('http://127.0.0.1:5000');
 				var socket = io.connect('http://' + document.domain + ':' + location.port);
                  socket.on('connect',function() {
-                    socket.send('testing');
-                 
+                    //socket.send('testing');
+					//socket.emit(foo);
                  });
+
+				 
                  socket.on('message', function(msg) {
-                    Materialize.toast(msg, 1000)
+                    Materialize.toast(msg, 10000,'red')
+					
                  });
 
-				 socket.on('image_request', function(msg) {
-                    Materialize.toast(msg, 1000)
+				 var selected_date = coo;
+				 console.log(selected_date);
+				 socket.on('info', function(msg) {
+					
+					console.log(msg);
+                 });
+
+				 socket.on('count', function(msg) {
+                    //Materialize.toast(msg, 1000,'blue')
+
+					console.log(msg);
+					$('#page_max').html(msg);
+					
                  });
 
 				
 
-				$('.datepicker').pickadate({
-					selectMonths: true, // Creates a dropdown to control month
-					selectYears: 15, // Creates a dropdown of 15 years to control year,
-					format: 'yyyy-mm-dd',
-					closeOnSelect: false // Close upon selecting a date,
-				});
-
-				
-
-				
+			
 				
 			if (typeof foo != 'undefined') {
 				$('#page_view').html(foo);
@@ -380,6 +426,8 @@
 				document.getElementById('curr_date').value      = curr_date;
 				document.getElementById('cellphone').value      = cellphone;
 				document.getElementById('owner_id').value       = owner_id;
+				document.getElementById('the_id').value         = the_id;
+
 
 				document.getElementById('driver_name2').value    = driver_name;
 				document.getElementById('the_owner2').value      = the_owner;
@@ -388,6 +436,7 @@
 				document.getElementById('curr_date2').value      = curr_date;
 				document.getElementById('cellphone2').value      = cellphone;
 				document.getElementById('owner_id2').value       = owner_id;
+				document.getElementById('the_id2').value         = the_id;
 
 				//------------count variable-----------------///
 			}	
