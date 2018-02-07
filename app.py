@@ -11,7 +11,7 @@ from twilio.rest import Client
 from random import random
 from random import *
 from flask_socketio import SocketIO
-from datetime import datetime
+import datetime
 from flask_socketio import send, emit
 from flask_paginate import Pagination, get_page_args
 import click
@@ -33,10 +33,11 @@ thread = None
 thread_lock = Lock()
 socketio = SocketIO(app, async_mode=async_mode)
 app.config['UPLOAD_FOLDER'] = PEOPLE_FOLDER
+max_stmt_length = 1000000000
 
 def background_thread():
 	while True:
-		current_date = '2018-02-06'
+		current_date = datetime.date.today()
 		cursor = db.cursor(pymysql.cursors.DictCursor)
 		query = """
 		SELECT DISTINCT(o.proof_picture), o.id,o.ending_time, o.job_code, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
@@ -58,13 +59,10 @@ def background_thread():
 		for row in results:
 			t1 = row['Driver']
 			t2 = row['job_code']
-			#t0 = row['id']
 			payload1 = 'Lastest Ticket' + '-' +  str(t1)  + '-'+  str(t2)
-			#payload2 = t0
 			socketio.emit('message', payload1)
-			#socketio.emit('info', payload2)
 			socketio.sleep(10)
-		current_date = '2018-02-06'
+		current_date = datetime.date.today()
 		cursor = db.cursor(pymysql.cursors.DictCursor)
 		query = """
 		select count(owner_id) from
@@ -87,6 +85,7 @@ def background_thread():
 			socketio.emit('count', thecount)
 			#socketio.emit('page_date', current_date )
 			socketio.sleep(10)
+		
 		cursor.close()
 
 
@@ -95,6 +94,14 @@ def feedLoop():
 	global thread                                                               
 	if thread is None:                                                          
 		thread = socketio.start_background_task(target=background_thread) 
+
+def messageRecived():
+  print( 'message was received!!!' )
+
+@socketio.on( 'send_message_1' )
+def handle_my_custom_event( json ):
+  print( 'recived my event: ' + str( json ) )
+  socketio.emit( 'my response', json, callback=messageRecived )
 		
 def makeUSNumber(num):
 	result = re.sub('[^0-9]', '', num)

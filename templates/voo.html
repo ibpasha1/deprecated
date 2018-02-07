@@ -91,9 +91,12 @@
 		
 {% for row in data %}
 		<script type="text/javascript">
+		    var todayDate = new Date().toISOString().slice(0,10);
+			console.log(todayDate);
 		    var soo = '';
 			soo = "{{status}}";
 			var coo = "{{row['date']}}";
+			console.log(coo);
 			foo = "{{counter}}";
 			var foo = Number(foo);
 			uoo = "{{row['owner_id']}}";
@@ -234,217 +237,171 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
 		<script text="text/javascript">
 
-
-		// document.getElementById("Vbutton").disabled = false;
-		// document.getElementById("Rbutton").disabled = false;
-		
-
-			function clickVerify() {
-				console.log("CLICK  VERFIY");
-				Materialize.toast('Verify Image complete', 1000,'green')
-				// var date         =$('#back-text-1').val()
-				// var offset       =$('#back-offset-1').val()
-				// var img_status   =$('#img_status').val()
-				// var retake_status=$('#retake_status').val()
-				// var owner_id     =$('#confirmed_image').val()
-				// var driver_name  =$('#driver_name').val()
-				// var the_owner    =$('#the_owner').val()
-				// var tk_num       =$('#tk_num').val()
-				// var com_name     =$('#com_name').val()
-				// var curr_date    =$('#current_date').val()
-				// var cellphone    =$('#cellphone').val()
-				console.log("IMG FORM SERLIZ: " + $('#image_form').serialize());
-				$.ajax({
-					url: '/verify',
-					data: $('#image_form').serialize(),
-					type: 'POST',
-					success: function(response) {
-						$("#nextPageBtn").click();
-						//I need to some how be able to populate my table with the returned list called jobs;
-					},
-					error: function(error) {}
-				});
-			}
+// document.getElementById("Vbutton").disabled = false;
+// document.getElementById("Rbutton").disabled = false;
 
 
-			function getPage() {
-				console.log("page bro");
-				Materialize.toast('Retake request sent to driver', 1000,'yellow')
-				// var date         =$('#back-text-1').val()
-				// var offset       =$('#back-offset-1').val()
-				// var img_status   =$('#img_status').val()
-				// var retake_status=$('#retake_status').val()
-				// var owner_id     =$('#confirmed_image').val()
-				// var driver_name  =$('#driver_name').val()
-				// var the_owner    =$('#the_owner').val()
-				// var tk_num       =$('#tk_num').val()
-				// var com_name     =$('#com_name').val()
-				// var curr_date    =$('#current_date').val()
-				// var cellphone    =$('#cellphone').val()
-				console.log("IMG FORM SERLIZ: " + $('#retake_form').serialize());
-				$.ajax({
-					url: '/retake',
-					data: $('#retake_form').serialize(),
-					type: 'POST',
-					success: function(response) {
-						$("#nextPageBtn").click();
-						//I need to some how be able to populate my table with the returned list called jobs;
-					},
-					error: function(error) {}
-				});
-			}
+function clickVerify() {
+	console.log("CLICK  VERFIY");
+	Materialize.toast('Verify Image complete', 1000, 'green')
+	console.log("IMG FORM SERLIZ: " + $('#image_form').serialize());
+	$.ajax({
+		url: '/verify',
+		data: $('#image_form').serialize(),
+		type: 'POST',
+		success: function (response) {
+			$("#nextPageBtn").click();
+			//I need to some how be able to populate my table with the returned list called jobs;
+		},
+		error: function (error) {}
+	});
+}
+
+function clickRetake() {
+	console.log("CLICK  RETAKE");
+	Materialize.toast('Retake request sent to driver', 1000, 'yellow')
+	console.log("IMG FORM SERLIZ: " + $('#retake_form').serialize());
+	$.ajax({
+		url: '/retake',
+		data: $('#retake_form').serialize(),
+		type: 'POST',
+		success: function (response) {
+			$("#nextPageBtn").click();
+			//I need to some how be able to populate my table with the returned list called jobs;
+		},
+		error: function (error) {}
+	});
+}
+
+$(document).ready(function () {
+
+	$('.datepicker').pickadate({
+		selectMonths: true, // Creates a dropdown to control month
+		selectYears: 15, // Creates a dropdown of 15 years to control year,
+		format: 'yyyy-mm-dd',
+		closeOnSelect: false // Close upon selecting a date,
+	});
+	soo = "{{status}}";
+
+	if (soo == 1) {
+		$("#Vbutton").hide();
+		$("#Rbutton").hide();
+	}
+
+	$("#Vbutton").click(function () {
+		clickVerify();
+		part1 = "Image Verification Sent:";
+		part2 = tk_num;
+		payload_1 = part1 + part2;
+		socket.emit('send_message_1', payload_1);
+	})
+
+	$("#Rbutton").click(function () {
+		clickRetake();
+		part1 = "SMS Sent to:";
+		part2 = cellphone;
+		part3 = driver_name;
+		payload_2 = part1 + part2 + part3;
+		socket.emit('send_message_1', payload_2);
+
+	})
 
 
+	//var socket = io.connect('http://127.0.0.1:5000');
+	var socket = io.connect('http://' + document.domain + ':' + location.port);
+	socket.on('connect', function () {
+		//socket.send('testing');
+		//socket.emit(foo);
+	});
 
-			function clickRetake() {
-				console.log("CLICK  VERFIY");
-				Materialize.toast('Retake request sent to driver', 1000,'yellow')
-				// var date         =$('#back-text-1').val()
-				// var offset       =$('#back-offset-1').val()
-				// var img_status   =$('#img_status').val()
-				// var retake_status=$('#retake_status').val()
-				// var owner_id     =$('#confirmed_image').val()
-				// var driver_name  =$('#driver_name').val()
-				// var the_owner    =$('#the_owner').val()
-				// var tk_num       =$('#tk_num').val()
-				// var com_name     =$('#com_name').val()
-				// var curr_date    =$('#current_date').val()
-				// var cellphone    =$('#cellphone').val()
-				console.log("IMG FORM SERLIZ: " + $('#retake_form').serialize());
-				$.ajax({
-					url: '/retake',
-					data: $('#retake_form').serialize(),
-					type: 'POST',
-					success: function(response) {
-						$("#nextPageBtn").click();
-						//I need to some how be able to populate my table with the returned list called jobs;
-					},
-					error: function(error) {}
-				});
-			}
+	socket.on('my response', function (msg) {
+		Materialize.toast(msg, 10000, 'gray')
+		console.log(msg);
 
-			$( document ).ready(function() {
+	});
 
-				$('.datepicker').pickadate({
-					selectMonths: true, // Creates a dropdown to control month
-					selectYears: 15, // Creates a dropdown of 15 years to control year,
-					format: 'yyyy-mm-dd',
-					closeOnSelect: false // Close upon selecting a date,
-				});
-				soo = "{{status}}";
+	
+	socket.on('message', function (msg) {
+		Materialize.toast(msg, 10000, 'orange')
+		console.log(msg);
 
-				if (soo == 1) {
-					$("#Vbutton").hide();
-					$("#Rbutton").hide();
-				}	
+	});
 
-				$("#Vbutton").click(function() {
-					clickVerify();
-					
-				})
-
-				$("#Rbutton").click(function() {
-					clickRetake();
-					
-				})
-
-				
-				
-				//var socket = io.connect('http://127.0.0.1:5000');
-				var socket = io.connect('http://' + document.domain + ':' + location.port);
-                 socket.on('connect',function() {
-                    //socket.send('testing');
-					//socket.emit(foo);
-                 });
-
-				 
-                 socket.on('message', function(msg) {
-                    Materialize.toast(msg, 10000,'red')
-					
-                 });
-
-				 var selected_date = coo;
-				 console.log(selected_date);
-				 socket.on('info', function(msg) {
-					
-					console.log(msg);
-                 });
-
-				 socket.on('count', function(msg) {
-                    //Materialize.toast(msg, 1000,'blue')
-
-					console.log(msg);
-					$('#page_max').html(msg);
-					
-                 });
-
-				
-
-			
-				
-			if (typeof foo != 'undefined') {
-				$('#page_view').html(foo);
-				$('#page_max').html(page_max);
-
-				document.getElementById('back-text').value = coo;
-				document.getElementById('back-text').placeholder = coo;
-				document.getElementById('next-text').value = coo;
-				document.getElementById('next-text').placeholder = coo;
-				//--------------------------------------------------------
-				document.getElementById('back-text-1').value = coo;
-				document.getElementById('back-text-1').placeholder = coo;
-				document.getElementById('next-text-1').value = coo;
-				document.getElementById('next-text-1').placeholder = coo;
-
-				document.getElementById('back-offset-1').value = ((foo + 1) > page_max - 1) ? page_max - 1 : foo + 1;
-				document.getElementById('next-offset-1').value = ((foo + 1) > page_max - 1) ? page_max - 1 : foo + 1;
-				//--------------------------------------------------------
-
-				document.getElementById('back-offset').value = ((foo - 1) < 0) ? 0 : foo - 1;
-				document.getElementById('next-offset').value = ((foo + 1) > page_max - 1) ? page_max - 1 : foo + 1;
-			
-				document.getElementById("thedatefield").placeholder = coo;
-
-				// document.getElementById('confirmed_image').value = boo;
-				// document.getElementById('retake_image').value    = uoo;
-				//--------------------------------------------------------
-				// if (joo == 1) {
-				// 	$("#Vbutton").disable();
-				// 	$("#Rbutton").disable();
-				// } else if (joo == 0) {
-				// 	$("#Vbutton").enable();
-				// 	$("#Rbutton").enable();
-				// }
-
-				
-				//------------confirmed image variables-----------------///
-				document.getElementById('driver_name').value    = driver_name;
-				document.getElementById('the_owner').value      = the_owner;
-				//console.log("bottom shit: " + the_owner + " | " + $("#the_owner").val());
-				document.getElementById('tk_num').value         = tk_num;
-				document.getElementById('com_name').value       = com_name;
-				document.getElementById('curr_date').value      = curr_date;
-				document.getElementById('cellphone').value      = cellphone;
-				document.getElementById('owner_id').value       = owner_id;
-				document.getElementById('the_id').value         = the_id;
+	var selected_date = coo;
+	console.log(selected_date);
 
 
-				document.getElementById('driver_name2').value    = driver_name;
-				document.getElementById('the_owner2').value      = the_owner;
-				document.getElementById('tk_num2').value         = tk_num;
-				document.getElementById('com_name2').value       = com_name;
-				document.getElementById('curr_date2').value      = curr_date;
-				document.getElementById('cellphone2').value      = cellphone;
-				document.getElementById('owner_id2').value       = owner_id;
-				document.getElementById('the_id2').value         = the_id;
+	socket.on('count', function (msg) {
+		if (todayDate == selected_date) {
+			console.log(msg);
+			$('#page_max').html(msg);
+		} else {
+			$('#page_max').html(page_max);
+		}
+	});
 
-				//------------count variable-----------------///
-			}	
-			 
-		
-						
-			
-			});
+
+	if (typeof foo != 'undefined') {
+		$('#page_view').html(foo);
+		$('#page_max').html(page_max);
+
+		document.getElementById('back-text').value = coo;
+		document.getElementById('back-text').placeholder = coo;
+		document.getElementById('next-text').value = coo;
+		document.getElementById('next-text').placeholder = coo;
+		//--------------------------------------------------------
+		document.getElementById('back-text-1').value = coo;
+		document.getElementById('back-text-1').placeholder = coo;
+		document.getElementById('next-text-1').value = coo;
+		document.getElementById('next-text-1').placeholder = coo;
+
+		document.getElementById('back-offset-1').value = ((foo + 1) > page_max - 1) ? page_max - 1 : foo + 1;
+		document.getElementById('next-offset-1').value = ((foo + 1) > page_max - 1) ? page_max - 1 : foo + 1;
+		//--------------------------------------------------------
+
+		document.getElementById('back-offset').value = ((foo - 1) < 0) ? 0 : foo - 1;
+		document.getElementById('next-offset').value = ((foo + 1) > page_max - 1) ? page_max - 1 : foo + 1;
+
+		document.getElementById("thedatefield").placeholder = coo;
+
+		// document.getElementById('confirmed_image').value = boo;
+		// document.getElementById('retake_image').value    = uoo;
+		//--------------------------------------------------------
+		// if (joo == 1) {
+		// 	$("#Vbutton").disable();
+		// 	$("#Rbutton").disable();
+		// } else if (joo == 0) {
+		// 	$("#Vbutton").enable();
+		// 	$("#Rbutton").enable();
+		// }
+
+
+		//------------confirmed image variables-----------------///
+		document.getElementById('driver_name').value = driver_name;
+		document.getElementById('the_owner').value = the_owner;
+		//console.log("bottom shit: " + the_owner + " | " + $("#the_owner").val());
+		document.getElementById('tk_num').value = tk_num;
+		document.getElementById('com_name').value = com_name;
+		document.getElementById('curr_date').value = curr_date;
+		document.getElementById('cellphone').value = cellphone;
+		document.getElementById('owner_id').value = owner_id;
+		document.getElementById('the_id').value = the_id;
+
+
+		document.getElementById('driver_name2').value = driver_name;
+		document.getElementById('the_owner2').value = the_owner;
+		document.getElementById('tk_num2').value = tk_num;
+		document.getElementById('com_name2').value = com_name;
+		document.getElementById('curr_date2').value = curr_date;
+		document.getElementById('cellphone2').value = cellphone;
+		document.getElementById('owner_id2').value = owner_id;
+		document.getElementById('the_id2').value = the_id;
+
+		//------------count variable-----------------///
+	}
+
+
+});
 			
 		</script>
 	</body>
