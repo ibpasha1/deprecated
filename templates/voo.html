@@ -84,17 +84,13 @@
 		    </div>
 		</center>
 		</br>
-		<script type="text/javascript">
-			// foo = 0;
-			// coo = 0;
-		</script>
-		
 {% for row in data %}
 		<script type="text/javascript">
 		    var todayDate = new Date().toISOString().slice(0,10);
 			console.log(todayDate);
 		    var soo = '';
 			soo = "{{status}}";
+			console.log(soo);
 			var coo = "{{row['date']}}";
 			console.log(coo);
 			foo = "{{counter}}";
@@ -102,8 +98,11 @@
 			uoo = "{{row['owner_id']}}";
 			boo = "{{row['owner_id']}}";
 			page_max = "{{row['thecount']}}";
+			console.log(page_max);
 			job_code = "{{row['job_code']}}";
 			job_code = Number(job_code);
+			var last_known = "{{e_time}}";
+			console.log(last_known);
 			
 
 			driver_name = "{{row['driver']}}";
@@ -120,8 +119,8 @@
 			console.log(cellphone);
 			owner_id   = "{{row['owner_id']}}";
 			console.log(owner_id);
-			the_id   = "{{row['the_id']}}";
-			console.log(the_id);
+			confirm_id   = "{{row['id10']}}";
+			console.log(confirm_id);
 			
 		</script>
 		<span class="divLeft">
@@ -137,7 +136,7 @@
 							<input type="hidden" id="owner_id"         name="owner_id" >
 							<input type="hidden" id="driver_name"      name="driver_name" >
 							<input type="hidden" id="the_owner"        name="the_owner" >
-							<input type="hidden" id="the_id"           name="the_id" >
+							<input type="hidden" id="confirm_id"       name="confirm_id" >
 							<input type="hidden" id="com_name"         name="com_name" >
 							<input type="hidden" id="curr_date"        name="curr_date" >
 							<input type="hidden" id="cellphone"        name="cellphone" >
@@ -151,7 +150,7 @@
 							<input type="hidden"  id="owner_id2"         name="owner_id" >
 							<input type="hidden"  id="driver_name2"      name="driver_name" >
 							<input type="hidden"  id="the_owner2"        name="the_owner" >
-							<input type="hidden"  id="the_id2"           name="the_id" >
+							<input type="hidden"  id="confirm_id2"       name="confirm_id" >
 							<input type="hidden"  id="com_name2"         name="com_name" >
 							<input type="hidden"  id="curr_date2"        name="curr_date" >
 							<input type="hidden"  id="cellphone2"        name="cellphone" >
@@ -171,9 +170,7 @@
 				<span class="title">Driver:</span>
 				<p>
 					{{row['driver']}} <br>
-					{{row['cell_phone']}}
-					
-					
+					{{row['cell_phone']}}<br>
 				</p>
 				<a href="#!" class="secondary-content"><i class="material-icons"></i></a>
 			</li>
@@ -259,7 +256,7 @@ function clickVerify() {
 
 function clickRetake() {
 	console.log("CLICK  RETAKE");
-	Materialize.toast('Retake request sent to driver', 1000, 'yellow')
+	Materialize.toast('Retake request sent to driver', 1000, 'orange')
 	console.log("IMG FORM SERLIZ: " + $('#retake_form').serialize());
 	$.ajax({
 		url: '/retake',
@@ -275,15 +272,19 @@ function clickRetake() {
 
 $(document).ready(function () {
 
+
 	$('.datepicker').pickadate({
 		selectMonths: true, // Creates a dropdown to control month
 		selectYears: 15, // Creates a dropdown of 15 years to control year,
 		format: 'yyyy-mm-dd',
 		closeOnSelect: false // Close upon selecting a date,
 	});
+
 	soo = "{{status}}";
 
 	if (soo == 1) {
+		console.log("BUTTON DISABLE STATUS:")
+		console.log(soo);
 		$("#Vbutton").hide();
 		$("#Rbutton").hide();
 	}
@@ -310,21 +311,52 @@ $(document).ready(function () {
 	//var socket = io.connect('http://127.0.0.1:5000');
 	var socket = io.connect('http://' + document.domain + ':' + location.port);
 	socket.on('connect', function () {
-		//socket.send('testing');
-		//socket.emit(foo);
+		//socket.emit('feeder',   Number(page_max));
+	    console.log(page_max);
 	});
 
-	socket.on('my response', function (msg) {
-		Materialize.toast(msg, 10000, 'gray')
+	socket.on('connect2', function () {
+		//socket.emit('feeder',   Number(page_max));
+	    console.log(page_max);
+	});
+
+	var intervalID = window.setInterval(myCallback1, 1000);
+	function myCallback1() {
+		//socket.emit('feeder',   Number(page_max),last_known );
+		socket.emit('feeder', {'page':  Number(page_max), 'time': last_known });
+		//socket.emit('feeder',   last_known);
+		//console.log("Last Know:");
+		//console.log(last_known);
+	}
+
+
+	var intervalID = window.setInterval(myCallback2, 1000);
+	function myCallback2() {
+		
+	}
+
+	socket.on('ticket_feed_listen', function (msg) {
+		Materialize.toast(msg, 10000, 'red')
 		console.log(msg);
-
 	});
 
+	socket.on('image_callback', function (msg) {
+		Materialize.toast(msg, 10000, 'red')
+		console.log(msg);
+	});
+
+	socket.on('time_now', function (msg) {
+		Materialize.toast(msg, 10000, 'red')
+		console.log(msg);
+	});
+
+	var d = new Date();
+    var n = d.getTime();
+	console.log(n);
 	
 	socket.on('message', function (msg) {
-		Materialize.toast(msg, 10000, 'orange')
+		Materialize.toast(msg, 1000, 'blue')
 		console.log(msg);
-
 	});
 
 	var selected_date = coo;
@@ -332,7 +364,7 @@ $(document).ready(function () {
 
 
 	socket.on('count', function (msg) {
-		if (todayDate == selected_date) {
+		if (todayDate == coo) {
 			console.log(msg);
 			$('#page_max').html(msg);
 		} else {
@@ -341,9 +373,10 @@ $(document).ready(function () {
 	});
 
 
+
 	if (typeof foo != 'undefined') {
 		$('#page_view').html(foo);
-		$('#page_max').html(page_max);
+		$('#xvooo').html(page_max);
 
 		document.getElementById('back-text').value = coo;
 		document.getElementById('back-text').placeholder = coo;
@@ -380,22 +413,20 @@ $(document).ready(function () {
 		document.getElementById('driver_name').value = driver_name;
 		document.getElementById('the_owner').value = the_owner;
 		//console.log("bottom shit: " + the_owner + " | " + $("#the_owner").val());
-		document.getElementById('tk_num').value = tk_num;
 		document.getElementById('com_name').value = com_name;
 		document.getElementById('curr_date').value = curr_date;
 		document.getElementById('cellphone').value = cellphone;
 		document.getElementById('owner_id').value = owner_id;
-		document.getElementById('the_id').value = the_id;
+		document.getElementById('confirm_id').value = confirm_id;
 
 
 		document.getElementById('driver_name2').value = driver_name;
 		document.getElementById('the_owner2').value = the_owner;
-		document.getElementById('tk_num2').value = tk_num;
 		document.getElementById('com_name2').value = com_name;
 		document.getElementById('curr_date2').value = curr_date;
 		document.getElementById('cellphone2').value = cellphone;
 		document.getElementById('owner_id2').value = owner_id;
-		document.getElementById('the_id2').value = the_id;
+		document.getElementById('confirm_id2').value = confirm_id;
 
 		//------------count variable-----------------///
 	}
