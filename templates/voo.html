@@ -7,6 +7,12 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 		<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 	</head>
+	<script text="text/javascript">
+
+	
+	</script>
+
+
 	<style type="text/css">
 		.divLeft {
 		width:700px;
@@ -71,7 +77,7 @@
 	<body>
 		<center>
 			<div class="datepicker-container"  style="width: 200px" >
-				<form action="/voo" method="post">
+				<form id="date_form" method="post">
 					<input  placeholder="" id="thedatefield" type="text" class="datepicker" name="date" placeholder="">
 					<input id="id" name="offset" type="hidden" value="1">
 					<input type="hidden" id="img_status"       name="img_status"    value="0">
@@ -81,7 +87,7 @@
 			</div>
 			<div class="btn-group">
 			<p>page: <a id="page_view"><a>/</a><a id="page_max"></a></p>
-		    </div>
+			</div>
 		</center>
 		</br>
 {% for row in data %}
@@ -119,7 +125,7 @@
 			console.log(cellphone);
 			owner_id   = "{{row['owner_id']}}";
 			console.log(owner_id);
-			confirm_id   = "{{row['id10']}}";
+			var confirm_id   = "{{row['id10']}}";
 			console.log(confirm_id);
 			
 		</script>
@@ -129,17 +135,17 @@
 				<li class="collection-item">
 					<div class="btn-group">
 						<form method="post" id="image_form"> 
-							<input type="hidden" id="back-text-1"      name="date">
-							<input type="hidden" id="back-offset-1"    name="offset">
-							<input type="hidden" id="img_status"       name="img_status"    value="{{counter}}">
-							<input type="hidden" id="retake_status"    name="retake_status" value="0">
-							<input type="hidden" id="owner_id"         name="owner_id" >
-							<input type="hidden" id="driver_name"      name="driver_name" >
-							<input type="hidden" id="the_owner"        name="the_owner" >
-							<input type="hidden" id="confirm_id"       name="confirm_id" >
-							<input type="hidden" id="com_name"         name="com_name" >
-							<input type="hidden" id="curr_date"        name="curr_date" >
-							<input type="hidden" id="cellphone"        name="cellphone" >
+							<input type="hidden"  id="back-text-1"      name="date">
+							<input type="hidden"  id="back-offset-1"    name="offset">
+							<input type="hidden"  id="img_status"       name="img_status"    value="{{counter}}">
+							<input type="hidden"  id="retake_status"    name="retake_status" value="0">
+							<input type="hidden"  id="owner_id"         name="owner_id" >
+							<input type="hidden"  id="driver_name"      name="driver_name" >
+							<input type="hidden"  id="the_owner"        name="the_owner" >
+							<input type="hidden"  id="confirm_id"       name="confirm_id" >
+							<input type="hidden"  id="com_name"         name="com_name" >
+							<input type="hidden"  id="curr_date"        name="curr_date" >
+							<input type="hidden"  id="cellphone"        name="cellphone" >
 							<button type="button" id="Vbutton" type="submit">verify image</button>
 						</form>
 						<form method="post" id="retake_form">
@@ -270,7 +276,31 @@ function clickRetake() {
 	});
 }
 
+function date_submit() {
+	$.ajax({
+		url: '/voo',
+		data: $('form').serialize(),
+		type: 'POST',
+		success: function(response) {
+			console.log(response);
+		},
+		error: function(error) {
+			console.log(error);
+		}
+	});
+}
+
+
+
+
+	
+
 $(document).ready(function () {
+
+
+	$("date_form").submit(function(event) {
+		date_submit();
+	})
 
 
 	$('.datepicker').pickadate({
@@ -280,14 +310,111 @@ $(document).ready(function () {
 		closeOnSelect: false // Close upon selecting a date,
 	});
 
-	soo = "{{status}}";
 
-	if (soo == 1) {
-		console.log("BUTTON DISABLE STATUS:")
-		console.log(soo);
-		$("#Vbutton").hide();
-		$("#Rbutton").hide();
+		///*
+    //var socket = io.connect('http://127.0.0.1:5000');
+	var socket = io.connect('http://' + document.domain + ':' + location.port);
+	socket.on('connect', function () {
+		//socket.emit('feeder',   Number(page_max));
+		//socket.emit('feeder', {'page':  Number(page_max), 'time': last_known, 'con_id': confirm_id });
+		
+	    console.log(page_max);
+	});
+	
+	//socket.emit('feeder', {'page':  Number(page_max), 'time': last_known });
+	
+	socket.emit('feeder', {'page':  Number(page_max) , 'con':confirm_id});
+	socket.emit('feed', {'last_known': last_known });
+
+
+
+	//socket.emit('button_status',{'confirm_id':confirm_id })
+	//socket.emit('feed', {'last_known': last_known });
+	//socket.emit('button_status',{'confirm_id': Number(confirm_id) })
+
+	var intervalID1 = window.setInterval(myCallback1, 8000);
+	function myCallback1() {
+		
+		console.log(confirm_id);
 	}
+
+
+	var intervalID2 = window.setInterval(myCallback2, 10000);
+	function myCallback2() {
+		//socket.emit('testloop',{'mess': 'whatever'});
+		
+	}
+	
+
+	socket.on('disable_status', function (msg) {
+		if (msg != 0) {
+			Materialize.toast("this ticket has already been verified", 1000, 'green')
+			console.log(msg);
+			$("#Vbutton").hide();
+		    $("#Rbutton").hide();
+		} else if (msg != 1){
+			Materialize.toast("NOT VERIFIED", 1000, 'red')
+		}
+		console.log("BUTTON STATUS FROM SOCKET");
+		console.log(msg);
+	});
+
+	socket.on('name', function (msg) {
+		Materialize.toast(msg, 1000, 'black')
+		console.log(msg);
+	});
+
+	var time_temp = 0;
+	socket.on('time_now', function (msg) {
+		var time_temp = msg;
+		console.log("Temp Time:");
+		console.log(time_temp);
+		//Materialize.toast(msg, 10000, 'red')
+	});
+	
+	socket.on('ticket', function (msg) {
+		console.log("Temp Time:");
+		console.log(time_temp);
+		console.log("Last Known:");
+		console.log(last_known);
+		if (time_temp < last_known) {
+			Materialize.toast(msg, 1000, 'green')
+		} 
+		
+		console.log(msg);
+	});
+
+	socket.on('image_callback', function (msg) {
+		Materialize.toast(msg, 10000, 'red')
+		console.log(msg);
+	});
+
+	
+
+	var d = new Date();
+    var n = d.getTime();
+	console.log(n);
+	
+	socket.on('message', function (msg) {
+		Materialize.toast(msg, 1000, 'blue')
+		console.log(msg);
+	});
+
+	var selected_date = coo;
+	console.log(selected_date);
+
+
+	socket.on('count', function (msg) {
+		 console.log(msg);
+		if (todayDate == coo) {
+			console.log(msg);
+			$('#page_max').html(msg);
+		} else {
+			$('#page_max').html(page_max);
+		}
+	});
+
+	
 
 	$("#Vbutton").click(function () {
 		clickVerify();
@@ -304,79 +431,18 @@ $(document).ready(function () {
 		part3 = driver_name;
 		payload_2 = part1 + part2 + part3;
 		socket.emit('send_message_1', payload_2);
-
 	})
 
-
-	//var socket = io.connect('http://127.0.0.1:5000');
-	var socket = io.connect('http://' + document.domain + ':' + location.port);
-	socket.on('connect', function () {
-		//socket.emit('feeder',   Number(page_max));
-	    console.log(page_max);
-	});
-
-	socket.on('connect2', function () {
-		//socket.emit('feeder',   Number(page_max));
-	    console.log(page_max);
-	});
-
-	var intervalID = window.setInterval(myCallback1, 1000);
-	function myCallback1() {
-		//socket.emit('feeder',   Number(page_max),last_known );
-		socket.emit('feeder', {'page':  Number(page_max), 'time': last_known });
-		//socket.emit('feeder',   last_known);
-		//console.log("Last Know:");
-		//console.log(last_known);
-	}
+ 	
 
 
-	var intervalID = window.setInterval(myCallback2, 1000);
-	function myCallback2() {
-		
-	}
-
-	socket.on('ticket_feed_listen', function (msg) {
-		Materialize.toast(msg, 10000, 'red')
-		console.log(msg);
-	});
-
-	socket.on('image_callback', function (msg) {
-		Materialize.toast(msg, 10000, 'red')
-		console.log(msg);
-	});
-
-	socket.on('time_now', function (msg) {
-		Materialize.toast(msg, 10000, 'red')
-		console.log(msg);
-	});
-
-	var d = new Date();
-    var n = d.getTime();
-	console.log(n);
 	
-	socket.on('message', function (msg) {
-		Materialize.toast(msg, 1000, 'blue')
-		console.log(msg);
-	});
-
-	var selected_date = coo;
-	console.log(selected_date);
-
-
-	socket.on('count', function (msg) {
-		if (todayDate == coo) {
-			console.log(msg);
-			$('#page_max').html(msg);
-		} else {
-			$('#page_max').html(page_max);
-		}
-	});
-
+//*/
 
 
 	if (typeof foo != 'undefined') {
 		$('#page_view').html(foo);
-		$('#xvooo').html(page_max);
+		$('#page_max').html(page_max);
 
 		document.getElementById('back-text').value = coo;
 		document.getElementById('back-text').placeholder = coo;
