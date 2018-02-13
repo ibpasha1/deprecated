@@ -10,107 +10,108 @@ import sys
 from twilio.rest import Client
 from random import random
 from random import *
-from flask_socketio import SocketIO
+#from flask_socketio import SocketIO
 import datetime
 #from datetime import datetime
-from flask_socketio import send, emit
+#from flask_socketio import send, emit
+#from flask_socketio import SocketIO, send, emit
 from flask_paginate import Pagination, get_page_args
 import click
 from flask import Blueprint
 from decimal import Decimal
-from threading import Lock
+#from threading import Lock
 account_sid = "AC14da0799655b1ce7bbddefb5ead5ab89"
 auth_token  = "67edc7ccf6675e798d2c6f88a93e0851"
 client = Client(account_sid, auth_token)
 PEOPLE_FOLDER = os.path.join('static', 'people_photo')
 time.strftime('%Y-%m-%d %H:%M:%S')
-local = False
+local = True
 if local == True:
-	db        = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local')
-	socketdb1 = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local')
-	socketdb2 = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local')
-	maindb1   = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local')
-	maindb2   = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local')
-	con       = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local')
+	db        = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local',autocommit=True)
+	socketdb1 = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local',autocommit=True)
+	socketdb2 = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local',autocommit=True)
+	socketdb3 = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local',autocommit=True)
+	maindb1   = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local',autocommit=True)
+	maindb2   = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local',autocommit=True)
+	con       = pymysql.connect(host='localhost', port=3306, user='root', passwd='root', db='bull_local',autocommit=True)
 else:
-	socketdb1  = pymysql.connect(host='aggdirect.cflbgllnrj45.us-east-1.rds.amazonaws.com', port=3306, user='bulldog', passwd='AThousandRoads2357', db='aggdirect')
-	socketdb2  = pymysql.connect(host='aggdirect.cflbgllnrj45.us-east-1.rds.amazonaws.com', port=3306, user='bulldog', passwd='AThousandRoads2357', db='aggdirect')
-	maindb1    = pymysql.connect(host='aggdirect.cflbgllnrj45.us-east-1.rds.amazonaws.com', port=3306, user='bulldog', passwd='AThousandRoads2357', db='aggdirect')
-	maindb2    = pymysql.connect(host='aggdirect.cflbgllnrj45.us-east-1.rds.amazonaws.com', port=3306, user='bulldog', passwd='AThousandRoads2357', db='aggdirect')
-	db         = pymysql.connect(host='aggdirect.cflbgllnrj45.us-east-1.rds.amazonaws.com', port=3306, user='bulldog', passwd='AThousandRoads2357', db='aggdirect')
+	socketdb1  = pymysql.connect(host='aggdirect.cflbgllnrj45.us-east-1.rds.amazonaws.com', port=3306, user='bulldog', passwd='AThousandRoads2357', db='aggdirect',autocommit=True)
+	socketdb2  = pymysql.connect(host='aggdirect.cflbgllnrj45.us-east-1.rds.amazonaws.com', port=3306, user='bulldog', passwd='AThousandRoads2357', db='aggdirect',autocommit=True)
+	socketdb3  = pymysql.connect(host='aggdirect.cflbgllnrj45.us-east-1.rds.amazonaws.com', port=3306, user='bulldog', passwd='AThousandRoads2357', db='aggdirect',autocommit=True)
+	maindb1    = pymysql.connect(host='aggdirect.cflbgllnrj45.us-east-1.rds.amazonaws.com', port=3306, user='bulldog', passwd='AThousandRoads2357', db='aggdirect',autocommit=True)
+	maindb2    = pymysql.connect(host='aggdirect.cflbgllnrj45.us-east-1.rds.amazonaws.com', port=3306, user='bulldog', passwd='AThousandRoads2357', db='aggdirect',autocommit=True)
+	db         = pymysql.connect(host='aggdirect.cflbgllnrj45.us-east-1.rds.amazonaws.com', port=3306, user='bulldog', passwd='AThousandRoads2357', db='aggdirect',autocommit=True)
 
-app = Flask(__name__, static_url_path='/static')
-app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app)
-async_mode = None
-thread  = None
-thread2 = None
-thread_lock = Lock()
-socketio = SocketIO(app, async_mode=async_mode)
-app.config['UPLOAD_FOLDER'] = PEOPLE_FOLDER
+app = Flask(__name__)
+#app = Flask(__name__, static_url_path='/static')
+#app.config['SECRET_KEY'] = 'secret!'
+#socketio = SocketIO(app)
+#async_mode = None
+#thread  = None
+#global client_count
+#client_count = None
+
+
+#thread2 = None
+#thread_lock = Lock()
+#socketio = SocketIO(app, async_mode=async_mode)
+#app.config['UPLOAD_FOLDER'] = PEOPLE_FOLDER
+#socketio = SocketIO(app)
+
 max_stmt_length = 1000000000
 
+ 
+'''
 @socketio.on( 'feeder' )
 def background_thread(json):
+	global client_count
 	print "-----------TEST LAST KNOWN FROM CLIENT------------------"
-	print('Message from client was  {0}'.format(json))
-	#last_known   = str(json)
-	#client_count = str(json)
-	print json['time']
-	print json['page']
-	last_known   = json['time']
+	#last_known   = json['time']
 	client_count = json['page']
-	if client_count and last_known != 0:
-		current_date = datetime.date.today()
-		cursor_socket1 = socketdb1.cursor(pymysql.cursors.DictCursor)
-		query = """
-		select count(owner_id), ending_time,owner_id from
-				(SELECT DISTINCT(o.proof_picture),o.id,o.ending_time, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname)
-				from drivers d where d.id = o.assigned_driver) as Driver,
-				(select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
-				(select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #",
-				(select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name",
-				(select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
-				(select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
-				as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
-				left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c on
-				c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '%s' ORDER by o.ending_time desc
-				)y
-		""" %(current_date)
-		cursor_socket1.execute(query)
-		results = cursor_socket1.fetchall()
-		for row in results:
-			thecount = row['count(owner_id)']
-			t3 = row['ending_time']
-			t4 = row['owner_id']
-			socketio.emit('count', thecount, callback=feedcaller)
-			print "client count" + str(client_count)
-			print "Socket count" + str(thecount)
-			payload1 = 'Lastest Ticket' + 'TimeStamp:' +  str(t3)  + 'Owner id:' +  str(t4) 
-			socketio.sleep(10) 
-			if client_count == thecount:
-				print "---------------COUNT  MATCH-------------------"
-			else:
-				print "---------------COUNT MISMATCH-----------------"
-			if t3 > last_known:
-				print "---------------INCOMING TICKET-----------------"
-				socketio.emit('message', payload1)
-				lock = False
-		cursor_socket1.close()
-		
+	#print last_known
+	print client_count
+	count()
+	#button_status()
+	return client_count
+'''
 
 '''
-@socketio.on( 'ticket_feed' )
-def ticket_feed(last_known):
-	lock = True
-	while lock:
-		print "-----------------------last known------------------------"
-		print last_known
-		current_date = datetime.date.today()
-		print current_date
-		cursor_socket2 = socketdb2.cursor(pymysql.cursors.DictCursor)
-		query = """
-		SELECT DISTINCT(o.proof_picture), o.id,o.ending_time, o.job_code, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
+@socketio.on( 'feed' )
+def button_status(json):
+	confirm_id = json['confirm_id']
+	temp_id = confirm_id
+	print "-------------print confirmed ID from button status--------------"
+	print temp_id
+	cursor_socket1 = socketdb1.cursor(pymysql.cursors.DictCursor)
+	query = """
+	SELECT confirmed from image_verified where confirm_id = '%s'
+	""" %(temp_id)
+	cursor_socket1.execute(query)
+	results = cursor_socket1.fetchall()
+	socketdb1.commit()
+	for row in results:
+		print "-----------Confirmed ID FROM SERVER 1 ------------------"
+		the_status = row['confirmed']
+		print "-----------Confirmed ID FROM SERVER 2------------------"
+		print the_status
+		socketio.emit('disable_status', the_status)
+	cursor_socket1.close()
+button_status()
+'''
+
+
+
+'''
+@socketio.on( 'feed' )
+def feed(json): 
+	last_known   = json['last_known']
+	print "-------------------LAST KNOWN TICKET TIME FROM CLIENT----------------------"
+	print last_known
+	current_date = datetime.date.today()
+	#current_date = '2017-01-20'
+	cursor_socket2 = socketdb2.cursor(pymysql.cursors.DictCursor)
+	query = """
+		SELECT DISTINCT(o.proof_picture),o.ending_time, o.id, o.job_code, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
 		from drivers d where d.id = o.assigned_driver) as Driver,
 		(select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
 		(select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #", 
@@ -122,50 +123,110 @@ def ticket_feed(last_known):
 		(select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
 		as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
 		left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c  on 
-		c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '%s' ORDER by o.ending_time desc LIMIT 1 
-		""" %(current_date)
-		cursor_socket2.execute(query)
-		results = cursor_socket2.fetchall()
-		for row in results:
-			t1 = row['Driver']
-			t2 = row['job_code']
-			t3 = row['ending_time']
-			payload1 = 'Lastest Ticket' + '-' +  str(t1)  + '-'+  str(t2)
-		if t3 > last_known:
-			socketio.emit('message', payload1)
-		else:
-			print "----------No New Tickets----------------"
-		cursor_socket2.close()
-		socketio.sleep(10)
+		c.id = j.customer_id  WHERE o.proof_picture <> 'Null' and o.date = '%s' ORDER by o.ending_time desc LIMIT 1 
+		""" % (current_date)
+	cursor_socket2.execute(query)
+	results = cursor_socket2.fetchall()
+	for row in results:
+		t3          = row['ending_time']
+		print "-------------------LAST KNOWN TICKET TIME FROM SERVER----------------------"
+		print t3
+		owner_id    = row['owner_id']
+		driver_name = row['Driver']
+		the_owner   = row['Owner']
+		#if  t3 > last_known:
+		payload = 'Lastest Ticket' + 'Owner id:' +  str(owner_id)  + 'Driver name:' +  str(driver_name) + 'The owner:' +  str(the_owner) 
+		emit('ticket', payload)
+		emit('time_now', t3)
+	 	print "-----------------TICKET------------------"
+		print payload
+	cursor_socket2.close()
 '''
 
-
-def feedcaller():
-  print( 'message was received!!!' )
-
-@socketio.on('connect')                                                         
-def countLoop():                                                                  
-	global thread                                                               
-	if thread is None:                                                          
-		thread = socketio.start_background_task(target=background_thread) 
-
 '''
-@socketio.on('connect')                                                         
-def feedLoop():                                                                  
-	global thread2                                                               
-	if thread2 is None:                                                          
-		thread2 = socketio.start_background_task(target=ticket_feed) 
+@socketio.on( 'testloop' )
+def testloop(json): 
+	mess   = json['mess']
+	code = 1
+	cursor_socket1 = socketdb1.cursor(pymysql.cursors.DictCursor)
+	query = """
+		SELECT * from feed where code = '%s'
+	""" %(code)
+	cursor_socket1.execute(query)
+	results = cursor_socket1.fetchall()
+	socketdb1.commit()
+	for row in results:
+		ticket = 0
+		ticket = row['name']
+		socketio.emit('name', ticket)
+	 	print "-----------------TICKET------------------"
+		print ticket
+	cursor_socket1.close()
 '''
+'''
+@socketio.on( 'feeder' )
+def count(json): 
+	client_count = json['page']
+	confirm_id   = json['con']
+	print "----------------------LAST KNOWN MAX PAGE NUMBER FROM CLIENT-----------------------"
+	print client_count
+	current_date = datetime.date.today()
+	# if were on localhost we dont have todays dynamic time so we need to hardcode the date
+	#current_date = '2017-01-20'
+	cursor_socket3 = socketdb3.cursor(pymysql.cursors.DictCursor)
+	query = """
+		select count(owner_id) from
+		(SELECT DISTINCT(o.proof_picture),o.id,o.ending_time, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname)
+		from drivers d where d.id = o.assigned_driver) as Driver,
+		(select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
+		(select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #",
+		(select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name",
+		(select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
+		(select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
+		as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
+		left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c on
+		c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '%s' ORDER by o.ending_time desc
+		)y
+	""" %(current_date)
+	cursor_socket3.execute(query)
+	results = cursor_socket3.fetchall()
+	for row in results:
+		thecount = 0
+		thecount = row['count(owner_id)']
+		socketio.emit('count', thecount)
+	 	print "-----------TEST LAST KNOWN MAX PAGE NUMBER FROM SERVER------------------"
+		print thecount
+	cursor_socket3.close()
+	the_status = 0
+	print "----------------Confirm_id-------------------------"
+	cursor_socket1 = socketdb1.cursor(pymysql.cursors.DictCursor)
+	query = """
+		SELECT * from image_verified where confirm_id = '%s'
+	""" %(confirm_id)
+	cursor_socket1.execute(query)
+	results = cursor_socket1.fetchall()
+	one  = 1
+	zero = 0
+	for row in results:
+		the_status = row['confirmed']
+		print "the status-------"
+		print the_status
+	if the_status > 0:
+		socketio.emit('disable_status', one)
+	else:
+		socketio.emit('disable_status', zero)
+#count()
 
 
-def messageRecived():
-  print( 'message was received!!!' )
+
+
 
 @socketio.on( 'send_message_1' )
 def handle_my_custom_event( json ):
   print( 'recived my event: ' + str( json ) )
   socketio.emit( 'image_callback', json, callback=messageRecived )
-		
+'''
+
 def makeUSNumber(num):
 	result = re.sub('[^0-9]', '', num)
 	if result[0] == '1':
@@ -195,14 +256,19 @@ def verify():
 		com_name     = request.form['com_name']
 		curr_date    = request.form['curr_date']
 		cell         = request.form['cellphone']
-		#now = datetime.now()
-		#user_id  = randint(1, 100)
 		cursor = db.cursor(pymysql.cursors.DictCursor)
-		print owner_id
-		cursor.execute("INSERT INTO image_verified(owner_id,confirmed,driver_name,the_owner,confirm_id,com_name,curr_date,cell) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)", (owner_id, confirmed,driver_name,the_owner,confirm_id,com_name,curr_date,cell))
-		db.commit()
-		cursor.close()
-	return "success"
+		query = """
+		select count(confirmed) from image_verified where confirm_id = '%s'
+		""" %(confirm_id)
+		cursor.execute(query)
+		results = cursor.fetchall()
+		for row in results:
+			c_id = row['count(confirmed)']
+		if c_id == 0:
+			cursor.execute("INSERT INTO image_verified(owner_id,confirmed,driver_name,the_owner,confirm_id,com_name,curr_date,cell) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)", (owner_id, confirmed,driver_name,the_owner,confirm_id,com_name,curr_date,cell))
+			db.commit()
+			cursor.close()
+		return "failed"
 
 @app.route("/retake", methods=['GET','POST'])
 def retake():
@@ -218,6 +284,7 @@ def retake():
 		com_name     = request.form['com_name']
 		curr_date    = request.form['curr_date']
 		cell         = request.form['cellphone']
+		textmessage  = request.form['textmessage']
 		#now = datetime.now()
 		cursor = db.cursor(pymysql.cursors.DictCursor)
 		print owner_id
@@ -227,7 +294,7 @@ def retake():
 		client.api.account.messages.create(
 				to=2409387539, #change to cell for real numbers - using my number right now so I dont bother people
 				from_="+17727424910",
-				body="Please retake your picture--sorry testing---Disregard!")
+				body=textmessage)
 	return "success"	
 
 @app.route("/voo", methods=['GET','POST'])
@@ -250,35 +317,8 @@ def voo():
 		cursor_main1 = maindb1.cursor(pymysql.cursors.DictCursor)
 		counter = offset
 		query = """
-			select count(owner_id),ending_time from
-			(SELECT DISTINCT(o.proof_picture),o.ending_time, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname)
-			from drivers d where d.id = o.assigned_driver) as Driver,
-			(select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
-			(select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #",
-			(select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name",
-			(select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
-			(select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
-			as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
-			left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c on
-			c.id = j.customer_id  WHERE o.task_status = 'Completed' and o.date = '%s' ORDER by o.ending_time desc
-			)x
-			""" %(date)
-		print "PRINT THE QUERY::::::"
-		print query
-		cursor_main1.execute(query)
-		results = cursor_main1.fetchall()
-		
-
-		for row in results:
-			thecount = row['count(owner_id)']
-			e_time   = row['ending_time']
-			#print thecount
-		cursor_main1.close()
-		print counter
-	cursor_main2 = maindb2.cursor(pymysql.cursors.DictCursor)
-	try:
-		query = """
-		SELECT DISTINCT(o.proof_picture),o.ending_time, o.id, o.job_code, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname) 
+		select count(owner_id),ending_time from
+		(SELECT DISTINCT(o.proof_picture),o.ending_time,o.id, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname)
 		from drivers d where d.id = o.assigned_driver) as Driver,
 		(select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
 		(select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #", 
@@ -289,11 +329,50 @@ def voo():
 		(select jobs.delivery_address from jobs where id = o.owner_id) as "type3",
 		(select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
 		as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
-		left join job_details jd on jd.job_code = o.job_code join jobs j on j.id = jd.job_id join customers c  on 
-		c.id = j.customer_id  WHERE o.proof_picture <> 'Null' and o.date = '%s' ORDER by o.ending_time asc LIMIT 1 offset %s
+		left join job_details jd on jd.job_code = o.job_code  join jobs j on j.id = jd.job_id join customers c  on 
+		c.id = j.customer_id   WHERE o.proof_picture <> 'Null' and o.date = '%s' and o.id not in (select confirm_id from image_verified where confirmed = '1') ORDER by o.ending_time desc
+		)x
+		""" %(date)
+		print "PRINT THE QUERY::::::"
+		print query
+		cursor_main1.execute(query)
+		results = cursor_main1.fetchall()
+		
+
+		for row in results:
+			thecount = row['count(owner_id)']
+			e_time   = row['ending_time']
+			#print thecount
+		#cursor_main1.close()
+		print "-------print counter:----------:"
+		print counter
+		print "-------print the count:----------:"
+		print thecount
+		print "-------print the E_time:----------:"
+		print e_time
+	cursor_main2 = maindb2.cursor(pymysql.cursors.DictCursor)
+	print 'THIS SHIT BREAKS AND WONT PRINT'
+	try:
+		query = """
+		SELECT DISTINCT(o.proof_picture),o.ending_time,o.id,o.job_code, o.owner_id, o.qty, (select CONCAT(d.fname, ' ', d.mname, ' ', d.lname)
+		from drivers d where d.id = o.assigned_driver) as Driver,
+		(select d.cellphone from drivers d where d.id = o.assigned_driver) as "driver_phone",
+		(select t.company_truck_number from trucks t where t.id = o.assigned_truck) as "Company Truck #", 
+		(select ow.trucking_company_name from owners ow where ow.id = o.owner_id ) as "Company Name", 
+		(select ow.cell_phone from owners ow where ow.id = o.owner_id ) as "Owner Phone#",
+		(select jobs.unit_pay from jobs where id = o.owner_id) as "type1",
+		(select jobs.pick_address from jobs where id = o.owner_id) as "type2",
+		(select jobs.delivery_address from jobs where id = o.owner_id) as "type3",
+		(select image_verified.confirmed from image_verified where confirm_id = o.id) as "type4",
+		(select concat(ow.fname, ' ', ow.mname, ' ', ow.lname) from owners ow where ow.id = o.owner_id )
+		as "Owner", o.ticket_number, c.company as "Customer Name" from owner_route_tasks o  
+		left join job_details jd on jd.job_code = o.job_code  join jobs j on j.id = jd.job_id join customers c  on 
+		c.id = j.customer_id   WHERE o.proof_picture <> 'Null' and o.date = '%s' and o.id not in (select confirm_id from image_verified where confirmed = '1')  ORDER by o.ending_time asc LIMIT 1 offset %s
 		""" % (date, offset)
+		print "BEFORE EXECUTE 2nd query"
 		cursor_main2.execute(query)
 		results = cursor_main2.fetchall()
+		print "AFTER EXECUTE 2nd query"
 		print counter
 		#import ipdb; ipdb.set_trace()
 		confirm_id = 'fuku'
@@ -320,7 +399,8 @@ def voo():
 				'pick_address':row['type2'],
 				'delivery_address':row['type3'],
 				'id10':row['id'],
-				'timestamp':row['ending_time']
+				'timestamp':row['ending_time'],
+				'confirmed_id':row['type4']
 				
 			})
 			print data
@@ -333,39 +413,30 @@ def voo():
 			com_name    = row['Company Name']
 			curr_date   = date
 			cell        = row['driver_phone']
+			status      = row['type4']
+
 		print "------------------------CONFIRMED_ID--------------------------------------"
 		print confirm_id
-		#cursor_main2.close()
-		cursor_con = con.cursor(pymysql.cursors.DictCursor)
-		query = """
-			SELECT confirmed from image_verified where confirm_id = '%s'
-			""" % (confirm_id)
-		cursor_con.execute(query)
-		results = cursor_con.fetchall()
-		for row in results:
-			print "THE QUERY IS WORKING"
-			status = row['confirmed']
-
 		
+
 		#cursor_main2.close()
 		counter += 1
 		print counter
 		
 		
 	except:
-		print "Error:" , sys.exc_info()[0]
+		print "Error V:" , sys.exc_info()[0]
+	
 	
 	print "STATUS: "
 	print status
 	return render_template('voo.html',data=data, counter=counter, status=status, e_time=e_time)
+	#return jsonify({'counter' : counter})
 	# return jsonify('data',data)
-
-
-
-
-
+	
 
 if __name__ == "__main__":
 	#app.secret_key = 'secret123'
-	#app.run(debug=True)
-	socketio.run(app, debug=True)
+	app.run(debug=True)
+	#socketio.run(app, debug=True)
+	
